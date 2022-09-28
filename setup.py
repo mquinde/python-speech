@@ -22,18 +22,18 @@ import setuptools
 
 name = "google-cloud-speech"
 description = "Google Cloud Speech API client library"
-version = "2.3.0"
+version = "2.15.1"
 # Should be one of:
 # 'Development Status :: 3 - Alpha'
 # 'Development Status :: 4 - Beta'
 # 'Development Status :: 5 - Production/Stable'
 release_status = "Development Status :: 5 - Production/Stable"
 dependencies = [
-    "google-api-core[grpc] >= 1.22.2, < 2.0.0dev",
-    "libcst >= 0.2.5",
-    "proto-plus >= 1.4.0",
+    "google-api-core[grpc] >= 1.32.0, <3.0.0dev,!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*",
+    "proto-plus >= 1.22.0, <2.0.0dev",
+    "protobuf >= 3.19.0, <5.0.0dev",
 ]
-extras = {}
+extras = {"libcst": "libcst >= 0.2.5"}
 
 
 # Setup boilerplate below this line.
@@ -73,9 +73,10 @@ setuptools.setup(
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Operating System :: OS Independent",
         "Topic :: Internet",
     ],
@@ -84,7 +85,7 @@ setuptools.setup(
     namespace_packages=namespaces,
     install_requires=dependencies,
     extras_require=extras,
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     scripts=[
         "scripts/fixup_speech_v1_keywords.py",
         "scripts/fixup_speech_v1p1beta1_keywords.py",

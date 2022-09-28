@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-
-# Copyright 2020 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 import proto  # type: ignore
 
-
-from google.protobuf import duration_pb2 as duration  # type: ignore
-from google.protobuf import timestamp_pb2 as timestamp  # type: ignore
-from google.rpc import status_pb2 as status  # type: ignore
+from google.cloud.speech_v1.types import resource
+from google.protobuf import duration_pb2  # type: ignore
+from google.protobuf import timestamp_pb2  # type: ignore
+from google.protobuf import wrappers_pb2  # type: ignore
+from google.rpc import status_pb2  # type: ignore
 
 
 __protobuf__ = proto.module(
@@ -28,6 +27,7 @@ __protobuf__ = proto.module(
     manifest={
         "RecognizeRequest",
         "LongRunningRecognizeRequest",
+        "TranscriptOutputConfig",
         "StreamingRecognizeRequest",
         "StreamingRecognitionConfig",
         "RecognitionConfig",
@@ -60,9 +60,16 @@ class RecognizeRequest(proto.Message):
             Required. The audio data to be recognized.
     """
 
-    config = proto.Field(proto.MESSAGE, number=1, message="RecognitionConfig",)
-
-    audio = proto.Field(proto.MESSAGE, number=2, message="RecognitionAudio",)
+    config = proto.Field(
+        proto.MESSAGE,
+        number=1,
+        message="RecognitionConfig",
+    )
+    audio = proto.Field(
+        proto.MESSAGE,
+        number=2,
+        message="RecognitionAudio",
+    )
 
 
 class LongRunningRecognizeRequest(proto.Message):
@@ -76,11 +83,50 @@ class LongRunningRecognizeRequest(proto.Message):
             request.
         audio (google.cloud.speech_v1.types.RecognitionAudio):
             Required. The audio data to be recognized.
+        output_config (google.cloud.speech_v1.types.TranscriptOutputConfig):
+            Optional. Specifies an optional destination
+            for the recognition results.
     """
 
-    config = proto.Field(proto.MESSAGE, number=1, message="RecognitionConfig",)
+    config = proto.Field(
+        proto.MESSAGE,
+        number=1,
+        message="RecognitionConfig",
+    )
+    audio = proto.Field(
+        proto.MESSAGE,
+        number=2,
+        message="RecognitionAudio",
+    )
+    output_config = proto.Field(
+        proto.MESSAGE,
+        number=4,
+        message="TranscriptOutputConfig",
+    )
 
-    audio = proto.Field(proto.MESSAGE, number=2, message="RecognitionAudio",)
+
+class TranscriptOutputConfig(proto.Message):
+    r"""Specifies an optional destination for the recognition
+    results.
+
+
+    .. _oneof: https://proto-plus-python.readthedocs.io/en/stable/fields.html#oneofs-mutually-exclusive-fields
+
+    Attributes:
+        gcs_uri (str):
+            Specifies a Cloud Storage URI for the recognition results.
+            Must be specified in the format:
+            ``gs://bucket_name/object_name``, and the bucket must
+            already exist.
+
+            This field is a member of `oneof`_ ``output_type``.
+    """
+
+    gcs_uri = proto.Field(
+        proto.STRING,
+        number=1,
+        oneof="output_type",
+    )
 
 
 class StreamingRecognizeRequest(proto.Message):
@@ -92,11 +138,20 @@ class StreamingRecognizeRequest(proto.Message):
     ``audio_content`` and must not contain a ``streaming_config``
     message.
 
+    This message has `oneof`_ fields (mutually exclusive fields).
+    For each oneof, at most one member field can be set at the same time.
+    Setting any member of the oneof automatically clears all other
+    members.
+
+    .. _oneof: https://proto-plus-python.readthedocs.io/en/stable/fields.html#oneofs-mutually-exclusive-fields
+
     Attributes:
         streaming_config (google.cloud.speech_v1.types.StreamingRecognitionConfig):
             Provides information to the recognizer that specifies how to
             process the request. The first ``StreamingRecognizeRequest``
             message must contain a ``streaming_config`` message.
+
+            This field is a member of `oneof`_ ``streaming_request``.
         audio_content (bytes):
             The audio data to be recognized. Sequential chunks of audio
             data are sent in sequential ``StreamingRecognizeRequest``
@@ -108,6 +163,8 @@ class StreamingRecognizeRequest(proto.Message):
             fields, proto buffers use a pure binary representation (not
             base64). See `content
             limits <https://cloud.google.com/speech-to-text/quotas#content>`__.
+
+            This field is a member of `oneof`_ ``streaming_request``.
     """
 
     streaming_config = proto.Field(
@@ -116,8 +173,11 @@ class StreamingRecognizeRequest(proto.Message):
         oneof="streaming_request",
         message="StreamingRecognitionConfig",
     )
-
-    audio_content = proto.Field(proto.BYTES, number=2, oneof="streaming_request")
+    audio_content = proto.Field(
+        proto.BYTES,
+        number=2,
+        oneof="streaming_request",
+    )
 
 
 class StreamingRecognitionConfig(proto.Message):
@@ -144,6 +204,17 @@ class StreamingRecognitionConfig(proto.Message):
             ``END_OF_SINGLE_UTTERANCE`` event and cease recognition. It
             will return no more than one ``StreamingRecognitionResult``
             with the ``is_final`` flag set to ``true``.
+
+            The ``single_utterance`` field can only be used with
+            specified models, otherwise an error is thrown. The
+            ``model`` field in [``RecognitionConfig``][] must be set to:
+
+            -  ``command_and_search``
+            -  ``phone_call`` AND additional field
+               ``useEnhanced``\ =\ ``true``
+            -  The ``model`` field is left undefined. In this case the
+               API auto-selects a model based on any other parameters
+               that you set in ``RecognitionConfig``.
         interim_results (bool):
             If ``true``, interim results (tentative hypotheses) may be
             returned as they become available (these interim results are
@@ -151,11 +222,19 @@ class StreamingRecognitionConfig(proto.Message):
             omitted, only ``is_final=true`` result(s) are returned.
     """
 
-    config = proto.Field(proto.MESSAGE, number=1, message="RecognitionConfig",)
-
-    single_utterance = proto.Field(proto.BOOL, number=2)
-
-    interim_results = proto.Field(proto.BOOL, number=3)
+    config = proto.Field(
+        proto.MESSAGE,
+        number=1,
+        message="RecognitionConfig",
+    )
+    single_utterance = proto.Field(
+        proto.BOOL,
+        number=2,
+    )
+    interim_results = proto.Field(
+        proto.BOOL,
+        number=3,
+    )
 
 
 class RecognitionConfig(proto.Message):
@@ -204,6 +283,20 @@ class RecognitionConfig(proto.Message):
             language tag. Example: "en-US". See `Language
             Support <https://cloud.google.com/speech-to-text/docs/languages>`__
             for a list of the currently supported language codes.
+        alternative_language_codes (Sequence[str]):
+            A list of up to 3 additional
+            `BCP-47 <https://www.rfc-editor.org/rfc/bcp/bcp47.txt>`__
+            language tags, listing possible alternative languages of the
+            supplied audio. See `Language
+            Support <https://cloud.google.com/speech-to-text/docs/languages>`__
+            for a list of the currently supported language codes. If
+            alternative languages are listed, recognition result will
+            contain recognition in the most likely language detected
+            including the main language_code. The recognition result
+            will include the language tag of the language detected in
+            the audio. Note: This feature is only supported for Voice
+            Command and Voice Search use cases and performance may vary
+            for other use cases (e.g., phone call transcription).
         max_alternatives (int):
             Maximum number of recognition hypotheses to be returned.
             Specifically, the maximum number of
@@ -217,28 +310,52 @@ class RecognitionConfig(proto.Message):
             profanities, replacing all but the initial character in each
             filtered word with asterisks, e.g. "f***". If set to
             ``false`` or omitted, profanities won't be filtered out.
+        adaptation (google.cloud.speech_v1.types.SpeechAdaptation):
+            Speech adaptation configuration improves the accuracy of
+            speech recognition. For more information, see the `speech
+            adaptation <https://cloud.google.com/speech-to-text/docs/adaptation>`__
+            documentation. When speech adaptation is set it supersedes
+            the ``speech_contexts`` field.
         speech_contexts (Sequence[google.cloud.speech_v1.types.SpeechContext]):
             Array of
             [SpeechContext][google.cloud.speech.v1.SpeechContext]. A
             means to provide context to assist the speech recognition.
             For more information, see `speech
-            adaptation <https://cloud.google.com/speech-to-text/docs/context-strength>`__.
+            adaptation <https://cloud.google.com/speech-to-text/docs/adaptation>`__.
         enable_word_time_offsets (bool):
             If ``true``, the top result includes a list of words and the
             start and end time offsets (timestamps) for those words. If
             ``false``, no word-level time offset information is
             returned. The default is ``false``.
+        enable_word_confidence (bool):
+            If ``true``, the top result includes a list of words and the
+            confidence for those words. If ``false``, no word-level
+            confidence information is returned. The default is
+            ``false``.
         enable_automatic_punctuation (bool):
             If 'true', adds punctuation to recognition
             result hypotheses. This feature is only
             available in select languages. Setting this for
             requests in other languages has no effect at
             all. The default 'false' value does not add
-            punctuation to result hypotheses. Note: This is
-            currently offered as an experimental service,
-            complimentary to all users. In the future this
-            may be exclusively available as a premium
-            feature.
+            punctuation to result hypotheses.
+        enable_spoken_punctuation (google.protobuf.wrappers_pb2.BoolValue):
+            The spoken punctuation behavior for the call If not set,
+            uses default behavior based on model of choice e.g.
+            command_and_search will enable spoken punctuation by default
+            If 'true', replaces spoken punctuation with the
+            corresponding symbols in the request. For example, "how are
+            you question mark" becomes "how are you?". See
+            https://cloud.google.com/speech-to-text/docs/spoken-punctuation
+            for support. If 'false', spoken punctuation is not replaced.
+        enable_spoken_emojis (google.protobuf.wrappers_pb2.BoolValue):
+            The spoken emoji behavior for the call
+            If not set, uses default behavior based on model
+            of choice If 'true', adds spoken emoji
+            formatting for the request. This will replace
+            spoken emojis with the corresponding Unicode
+            symbols in the final transcript. If 'false',
+            spoken emojis are not replaced.
         diarization_config (google.cloud.speech_v1.types.SpeakerDiarizationConfig):
             Config to enable speaker diarization and set
             additional parameters to make diarization better
@@ -268,6 +385,15 @@ class RecognitionConfig(proto.Message):
                     <td><b>Description</b></td>
                   </tr>
                   <tr>
+                    <td><code>latest_long</code></td>
+                    <td>Best for long form content like media or conversation.</td>
+                  </tr>
+                  <tr>
+                    <td><code>latest_short</code></td>
+                    <td>Best for short form content like commands or single shot directed
+                    speech.</td>
+                  </tr>
+                  <tr>
                     <td><code>command_and_search</code></td>
                     <td>Best for short queries such as voice commands or voice search.</td>
                   </tr>
@@ -278,7 +404,7 @@ class RecognitionConfig(proto.Message):
                   </tr>
                   <tr>
                     <td><code>video</code></td>
-                    <td>Best for audio that originated from from video or includes multiple
+                    <td>Best for audio that originated from video or includes multiple
                         speakers. Ideally the audio is recorded at a 16khz or greater
                         sampling rate. This is a premium model that costs more than the
                         standard rate.</td>
@@ -288,6 +414,16 @@ class RecognitionConfig(proto.Message):
                     <td>Best for audio that is not one of the specific audio models.
                         For example, long-form audio. Ideally the audio is high-fidelity,
                         recorded at a 16khz or greater sampling rate.</td>
+                  </tr>
+                  <tr>
+                    <td><code>medical_conversation</code></td>
+                    <td>Best for audio that originated from a conversation between a
+                        medical provider and patient.</td>
+                  </tr>
+                  <tr>
+                    <td><code>medical_dictation</code></td>
+                    <td>Best for audio that originated from dictation notes by a medical
+                        provider.</td>
                   </tr>
                 </table>
         use_enhanced (bool):
@@ -314,8 +450,8 @@ class RecognitionConfig(proto.Message):
         The accuracy of the speech recognition can be reduced if lossy
         codecs are used to capture or transmit audio, particularly if
         background noise is present. Lossy codecs include ``MULAW``,
-        ``AMR``, ``AMR_WB``, ``OGG_OPUS``, ``SPEEX_WITH_HEADER_BYTE``, and
-        ``MP3``.
+        ``AMR``, ``AMR_WB``, ``OGG_OPUS``, ``SPEEX_WITH_HEADER_BYTE``,
+        ``MP3``, and ``WEBM_OPUS``.
 
         The ``FLAC`` and ``WAV`` audio file formats include a header that
         describes the included audio content. You can request recognition
@@ -337,38 +473,91 @@ class RecognitionConfig(proto.Message):
         AMR_WB = 5
         OGG_OPUS = 6
         SPEEX_WITH_HEADER_BYTE = 7
+        WEBM_OPUS = 9
 
-    encoding = proto.Field(proto.ENUM, number=1, enum=AudioEncoding,)
-
-    sample_rate_hertz = proto.Field(proto.INT32, number=2)
-
-    audio_channel_count = proto.Field(proto.INT32, number=7)
-
-    enable_separate_recognition_per_channel = proto.Field(proto.BOOL, number=12)
-
-    language_code = proto.Field(proto.STRING, number=3)
-
-    max_alternatives = proto.Field(proto.INT32, number=4)
-
-    profanity_filter = proto.Field(proto.BOOL, number=5)
-
+    encoding = proto.Field(
+        proto.ENUM,
+        number=1,
+        enum=AudioEncoding,
+    )
+    sample_rate_hertz = proto.Field(
+        proto.INT32,
+        number=2,
+    )
+    audio_channel_count = proto.Field(
+        proto.INT32,
+        number=7,
+    )
+    enable_separate_recognition_per_channel = proto.Field(
+        proto.BOOL,
+        number=12,
+    )
+    language_code = proto.Field(
+        proto.STRING,
+        number=3,
+    )
+    alternative_language_codes = proto.RepeatedField(
+        proto.STRING,
+        number=18,
+    )
+    max_alternatives = proto.Field(
+        proto.INT32,
+        number=4,
+    )
+    profanity_filter = proto.Field(
+        proto.BOOL,
+        number=5,
+    )
+    adaptation = proto.Field(
+        proto.MESSAGE,
+        number=20,
+        message=resource.SpeechAdaptation,
+    )
     speech_contexts = proto.RepeatedField(
-        proto.MESSAGE, number=6, message="SpeechContext",
+        proto.MESSAGE,
+        number=6,
+        message="SpeechContext",
     )
-
-    enable_word_time_offsets = proto.Field(proto.BOOL, number=8)
-
-    enable_automatic_punctuation = proto.Field(proto.BOOL, number=11)
-
+    enable_word_time_offsets = proto.Field(
+        proto.BOOL,
+        number=8,
+    )
+    enable_word_confidence = proto.Field(
+        proto.BOOL,
+        number=15,
+    )
+    enable_automatic_punctuation = proto.Field(
+        proto.BOOL,
+        number=11,
+    )
+    enable_spoken_punctuation = proto.Field(
+        proto.MESSAGE,
+        number=22,
+        message=wrappers_pb2.BoolValue,
+    )
+    enable_spoken_emojis = proto.Field(
+        proto.MESSAGE,
+        number=23,
+        message=wrappers_pb2.BoolValue,
+    )
     diarization_config = proto.Field(
-        proto.MESSAGE, number=19, message="SpeakerDiarizationConfig",
+        proto.MESSAGE,
+        number=19,
+        message="SpeakerDiarizationConfig",
     )
-
-    metadata = proto.Field(proto.MESSAGE, number=9, message="RecognitionMetadata",)
-
-    model = proto.Field(proto.STRING, number=13)
-
-    use_enhanced = proto.Field(proto.BOOL, number=14)
+    metadata = proto.Field(
+        proto.MESSAGE,
+        number=9,
+        message="RecognitionMetadata",
+    )
+    model = proto.Field(
+        proto.STRING,
+        number=13,
+    )
+    use_enhanced = proto.Field(
+        proto.BOOL,
+        number=14,
+    )
 
 
 class SpeakerDiarizationConfig(proto.Message):
@@ -392,16 +581,25 @@ class SpeakerDiarizationConfig(proto.Message):
             automatically determine the correct number of
             speakers. If not set, the default value is 6.
         speaker_tag (int):
-            Unused.
+            Output only. Unused.
     """
 
-    enable_speaker_diarization = proto.Field(proto.BOOL, number=1)
-
-    min_speaker_count = proto.Field(proto.INT32, number=2)
-
-    max_speaker_count = proto.Field(proto.INT32, number=3)
-
-    speaker_tag = proto.Field(proto.INT32, number=5)
+    enable_speaker_diarization = proto.Field(
+        proto.BOOL,
+        number=1,
+    )
+    min_speaker_count = proto.Field(
+        proto.INT32,
+        number=2,
+    )
+    max_speaker_count = proto.Field(
+        proto.INT32,
+        number=3,
+    )
+    speaker_tag = proto.Field(
+        proto.INT32,
+        number=5,
+    )
 
 
 class RecognitionMetadata(proto.Message):
@@ -482,21 +680,42 @@ class RecognitionMetadata(proto.Message):
         OTHER_OUTDOOR_DEVICE = 5
         OTHER_INDOOR_DEVICE = 6
 
-    interaction_type = proto.Field(proto.ENUM, number=1, enum=InteractionType,)
-
-    industry_naics_code_of_audio = proto.Field(proto.UINT32, number=3)
-
-    microphone_distance = proto.Field(proto.ENUM, number=4, enum=MicrophoneDistance,)
-
-    original_media_type = proto.Field(proto.ENUM, number=5, enum=OriginalMediaType,)
-
-    recording_device_type = proto.Field(proto.ENUM, number=6, enum=RecordingDeviceType,)
-
-    recording_device_name = proto.Field(proto.STRING, number=7)
-
-    original_mime_type = proto.Field(proto.STRING, number=8)
-
-    audio_topic = proto.Field(proto.STRING, number=10)
+    interaction_type = proto.Field(
+        proto.ENUM,
+        number=1,
+        enum=InteractionType,
+    )
+    industry_naics_code_of_audio = proto.Field(
+        proto.UINT32,
+        number=3,
+    )
+    microphone_distance = proto.Field(
+        proto.ENUM,
+        number=4,
+        enum=MicrophoneDistance,
+    )
+    original_media_type = proto.Field(
+        proto.ENUM,
+        number=5,
+        enum=OriginalMediaType,
+    )
+    recording_device_type = proto.Field(
+        proto.ENUM,
+        number=6,
+        enum=RecordingDeviceType,
+    )
+    recording_device_name = proto.Field(
+        proto.STRING,
+        number=7,
+    )
+    original_mime_type = proto.Field(
+        proto.STRING,
+        number=8,
+    )
+    audio_topic = proto.Field(
+        proto.STRING,
+        number=10,
+    )
 
 
 class SpeechContext(proto.Message):
@@ -520,9 +739,27 @@ class SpeechContext(proto.Message):
             for every month of the year, using the $MONTH class improves
             the likelihood of correctly transcribing audio that includes
             months.
+        boost (float):
+            Hint Boost. Positive value will increase the probability
+            that a specific phrase will be recognized over other similar
+            sounding phrases. The higher the boost, the higher the
+            chance of false positive recognition as well. Negative boost
+            values would correspond to anti-biasing. Anti-biasing is not
+            enabled, so negative boost will simply be ignored. Though
+            ``boost`` can accept a wide range of positive values, most
+            use cases are best served with values between 0 and 20. We
+            recommend using a binary search approach to finding the
+            optimal value for your use case.
     """
 
-    phrases = proto.RepeatedField(proto.STRING, number=1)
+    phrases = proto.RepeatedField(
+        proto.STRING,
+        number=1,
+    )
+    boost = proto.Field(
+        proto.FLOAT,
+        number=4,
+    )
 
 
 class RecognitionAudio(proto.Message):
@@ -533,12 +770,21 @@ class RecognitionAudio(proto.Message):
     See `content
     limits <https://cloud.google.com/speech-to-text/quotas#content>`__.
 
+    This message has `oneof`_ fields (mutually exclusive fields).
+    For each oneof, at most one member field can be set at the same time.
+    Setting any member of the oneof automatically clears all other
+    members.
+
+    .. _oneof: https://proto-plus-python.readthedocs.io/en/stable/fields.html#oneofs-mutually-exclusive-fields
+
     Attributes:
         content (bytes):
             The audio data bytes encoded as specified in
             ``RecognitionConfig``. Note: as with all bytes fields, proto
             buffers use a pure binary representation, whereas JSON
             representations use base64.
+
+            This field is a member of `oneof`_ ``audio_source``.
         uri (str):
             URI that points to a file that contains audio data bytes as
             specified in ``RecognitionConfig``. The file must not be
@@ -549,11 +795,20 @@ class RecognitionAudio(proto.Message):
             [google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT]).
             For more information, see `Request
             URIs <https://cloud.google.com/storage/docs/reference-uris>`__.
+
+            This field is a member of `oneof`_ ``audio_source``.
     """
 
-    content = proto.Field(proto.BYTES, number=1, oneof="audio_source")
-
-    uri = proto.Field(proto.STRING, number=2, oneof="audio_source")
+    content = proto.Field(
+        proto.BYTES,
+        number=1,
+        oneof="audio_source",
+    )
+    uri = proto.Field(
+        proto.STRING,
+        number=2,
+        oneof="audio_source",
+    )
 
 
 class RecognizeResponse(proto.Message):
@@ -565,10 +820,20 @@ class RecognizeResponse(proto.Message):
         results (Sequence[google.cloud.speech_v1.types.SpeechRecognitionResult]):
             Sequential list of transcription results
             corresponding to sequential portions of audio.
+        total_billed_time (google.protobuf.duration_pb2.Duration):
+            When available, billed audio seconds for the
+            corresponding request.
     """
 
     results = proto.RepeatedField(
-        proto.MESSAGE, number=2, message="SpeechRecognitionResult",
+        proto.MESSAGE,
+        number=2,
+        message="SpeechRecognitionResult",
+    )
+    total_billed_time = proto.Field(
+        proto.MESSAGE,
+        number=3,
+        message=duration_pb2.Duration,
     )
 
 
@@ -584,10 +849,36 @@ class LongRunningRecognizeResponse(proto.Message):
         results (Sequence[google.cloud.speech_v1.types.SpeechRecognitionResult]):
             Sequential list of transcription results
             corresponding to sequential portions of audio.
+        total_billed_time (google.protobuf.duration_pb2.Duration):
+            When available, billed audio seconds for the
+            corresponding request.
+        output_config (google.cloud.speech_v1.types.TranscriptOutputConfig):
+            Original output config if present in the
+            request.
+        output_error (google.rpc.status_pb2.Status):
+            If the transcript output fails this field
+            contains the relevant error.
     """
 
     results = proto.RepeatedField(
-        proto.MESSAGE, number=2, message="SpeechRecognitionResult",
+        proto.MESSAGE,
+        number=2,
+        message="SpeechRecognitionResult",
+    )
+    total_billed_time = proto.Field(
+        proto.MESSAGE,
+        number=3,
+        message=duration_pb2.Duration,
+    )
+    output_config = proto.Field(
+        proto.MESSAGE,
+        number=6,
+        message="TranscriptOutputConfig",
+    )
+    output_error = proto.Field(
+        proto.MESSAGE,
+        number=7,
+        message=status_pb2.Status,
     )
 
 
@@ -606,14 +897,29 @@ class LongRunningRecognizeMetadata(proto.Message):
             Time when the request was received.
         last_update_time (google.protobuf.timestamp_pb2.Timestamp):
             Time of the most recent processing update.
+        uri (str):
+            Output only. The URI of the audio file being
+            transcribed. Empty if the audio was sent as byte
+            content.
     """
 
-    progress_percent = proto.Field(proto.INT32, number=1)
-
-    start_time = proto.Field(proto.MESSAGE, number=2, message=timestamp.Timestamp,)
-
+    progress_percent = proto.Field(
+        proto.INT32,
+        number=1,
+    )
+    start_time = proto.Field(
+        proto.MESSAGE,
+        number=2,
+        message=timestamp_pb2.Timestamp,
+    )
     last_update_time = proto.Field(
-        proto.MESSAGE, number=3, message=timestamp.Timestamp,
+        proto.MESSAGE,
+        number=3,
+        message=timestamp_pb2.Timestamp,
+    )
+    uri = proto.Field(
+        proto.STRING,
+        number=4,
     )
 
 
@@ -624,9 +930,8 @@ class StreamingRecognizeResponse(proto.Message):
     client. If there is no recognizable audio, and ``single_utterance``
     is set to false, then no messages are streamed back to the client.
 
-    Here's an example of a series of ten
-    ``StreamingRecognizeResponse``\ s that might be returned while
-    processing audio:
+    Here's an example of a series of ``StreamingRecognizeResponse``\ s
+    that might be returned while processing audio:
 
     1. results { alternatives { transcript: "tube" } stability: 0.01 }
 
@@ -684,6 +989,10 @@ class StreamingRecognizeResponse(proto.Message):
             ``is_final=false`` results (the interim results).
         speech_event_type (google.cloud.speech_v1.types.StreamingRecognizeResponse.SpeechEventType):
             Indicates the type of speech event.
+        total_billed_time (google.protobuf.duration_pb2.Duration):
+            When available, billed audio seconds for the
+            stream. Set only if this is the last response in
+            the stream.
     """
 
     class SpeechEventType(proto.Enum):
@@ -691,13 +1000,26 @@ class StreamingRecognizeResponse(proto.Message):
         SPEECH_EVENT_UNSPECIFIED = 0
         END_OF_SINGLE_UTTERANCE = 1
 
-    error = proto.Field(proto.MESSAGE, number=1, message=status.Status,)
-
-    results = proto.RepeatedField(
-        proto.MESSAGE, number=2, message="StreamingRecognitionResult",
+    error = proto.Field(
+        proto.MESSAGE,
+        number=1,
+        message=status_pb2.Status,
     )
-
-    speech_event_type = proto.Field(proto.ENUM, number=4, enum=SpeechEventType,)
+    results = proto.RepeatedField(
+        proto.MESSAGE,
+        number=2,
+        message="StreamingRecognitionResult",
+    )
+    speech_event_type = proto.Field(
+        proto.ENUM,
+        number=4,
+        enum=SpeechEventType,
+    )
+    total_billed_time = proto.Field(
+        proto.MESSAGE,
+        number=5,
+        message=duration_pb2.Duration,
+    )
 
 
 class StreamingRecognitionResult(proto.Message):
@@ -734,7 +1056,7 @@ class StreamingRecognitionResult(proto.Message):
             that channel. For audio_channel_count = N, its output values
             can range from '1' to 'N'.
         language_code (str):
-            The
+            Output only. The
             `BCP-47 <https://www.rfc-editor.org/rfc/bcp/bcp47.txt>`__
             language tag of the language in this result. This language
             code was detected to have the most likelihood of being
@@ -742,18 +1064,31 @@ class StreamingRecognitionResult(proto.Message):
     """
 
     alternatives = proto.RepeatedField(
-        proto.MESSAGE, number=1, message="SpeechRecognitionAlternative",
+        proto.MESSAGE,
+        number=1,
+        message="SpeechRecognitionAlternative",
     )
-
-    is_final = proto.Field(proto.BOOL, number=2)
-
-    stability = proto.Field(proto.FLOAT, number=3)
-
-    result_end_time = proto.Field(proto.MESSAGE, number=4, message=duration.Duration,)
-
-    channel_tag = proto.Field(proto.INT32, number=5)
-
-    language_code = proto.Field(proto.STRING, number=6)
+    is_final = proto.Field(
+        proto.BOOL,
+        number=2,
+    )
+    stability = proto.Field(
+        proto.FLOAT,
+        number=3,
+    )
+    result_end_time = proto.Field(
+        proto.MESSAGE,
+        number=4,
+        message=duration_pb2.Duration,
+    )
+    channel_tag = proto.Field(
+        proto.INT32,
+        number=5,
+    )
+    language_code = proto.Field(
+        proto.STRING,
+        number=6,
+    )
 
 
 class SpeechRecognitionResult(proto.Message):
@@ -772,13 +1107,35 @@ class SpeechRecognitionResult(proto.Message):
             corresponding to the recognized result for the audio from
             that channel. For audio_channel_count = N, its output values
             can range from '1' to 'N'.
+        result_end_time (google.protobuf.duration_pb2.Duration):
+            Time offset of the end of this result
+            relative to the beginning of the audio.
+        language_code (str):
+            Output only. The
+            `BCP-47 <https://www.rfc-editor.org/rfc/bcp/bcp47.txt>`__
+            language tag of the language in this result. This language
+            code was detected to have the most likelihood of being
+            spoken in the audio.
     """
 
     alternatives = proto.RepeatedField(
-        proto.MESSAGE, number=1, message="SpeechRecognitionAlternative",
+        proto.MESSAGE,
+        number=1,
+        message="SpeechRecognitionAlternative",
     )
-
-    channel_tag = proto.Field(proto.INT32, number=2)
+    channel_tag = proto.Field(
+        proto.INT32,
+        number=2,
+    )
+    result_end_time = proto.Field(
+        proto.MESSAGE,
+        number=4,
+        message=duration_pb2.Duration,
+    )
+    language_code = proto.Field(
+        proto.STRING,
+        number=5,
+    )
 
 
 class SpeechRecognitionAlternative(proto.Message):
@@ -787,7 +1144,11 @@ class SpeechRecognitionAlternative(proto.Message):
     Attributes:
         transcript (str):
             Transcript text representing the words that
-            the user spoke.
+            the user spoke. In languages that use spaces to
+            separate words, the transcript might have a
+            leading space if it isn't the first result. You
+            can concatenate each result to obtain the full
+            transcript without using a separator.
         confidence (float):
             The confidence estimate between 0.0 and 1.0. A higher number
             indicates an estimated greater likelihood that the
@@ -803,11 +1164,19 @@ class SpeechRecognitionAlternative(proto.Message):
             will see all the words from the beginning of the audio.
     """
 
-    transcript = proto.Field(proto.STRING, number=1)
-
-    confidence = proto.Field(proto.FLOAT, number=2)
-
-    words = proto.RepeatedField(proto.MESSAGE, number=3, message="WordInfo",)
+    transcript = proto.Field(
+        proto.STRING,
+        number=1,
+    )
+    confidence = proto.Field(
+        proto.FLOAT,
+        number=2,
+    )
+    words = proto.RepeatedField(
+        proto.MESSAGE,
+        number=3,
+        message="WordInfo",
+    )
 
 
 class WordInfo(proto.Message):
@@ -829,22 +1198,46 @@ class WordInfo(proto.Message):
         word (str):
             The word corresponding to this set of
             information.
+        confidence (float):
+            The confidence estimate between 0.0 and 1.0. A higher number
+            indicates an estimated greater likelihood that the
+            recognized words are correct. This field is set only for the
+            top alternative of a non-streaming result or, of a streaming
+            result where ``is_final=true``. This field is not guaranteed
+            to be accurate and users should not rely on it to be always
+            provided. The default of 0.0 is a sentinel value indicating
+            ``confidence`` was not set.
         speaker_tag (int):
-            A distinct integer value is assigned for every speaker
-            within the audio. This field specifies which one of those
-            speakers was detected to have spoken this word. Value ranges
-            from '1' to diarization_speaker_count. speaker_tag is set if
-            enable_speaker_diarization = 'true' and only in the top
-            alternative.
+            Output only. A distinct integer value is assigned for every
+            speaker within the audio. This field specifies which one of
+            those speakers was detected to have spoken this word. Value
+            ranges from '1' to diarization_speaker_count. speaker_tag is
+            set if enable_speaker_diarization = 'true' and only in the
+            top alternative.
     """
 
-    start_time = proto.Field(proto.MESSAGE, number=1, message=duration.Duration,)
-
-    end_time = proto.Field(proto.MESSAGE, number=2, message=duration.Duration,)
-
-    word = proto.Field(proto.STRING, number=3)
-
-    speaker_tag = proto.Field(proto.INT32, number=5)
+    start_time = proto.Field(
+        proto.MESSAGE,
+        number=1,
+        message=duration_pb2.Duration,
+    )
+    end_time = proto.Field(
+        proto.MESSAGE,
+        number=2,
+        message=duration_pb2.Duration,
+    )
+    word = proto.Field(
+        proto.STRING,
+        number=3,
+    )
+    confidence = proto.Field(
+        proto.FLOAT,
+        number=4,
+    )
+    speaker_tag = proto.Field(
+        proto.INT32,
+        number=5,
+    )
 
 
 __all__ = tuple(sorted(__protobuf__.manifest))

@@ -20,9 +20,9 @@ set -eo pipefail
 # Enables `**` to include files nested inside sub-folders
 shopt -s globstar
 
-# Exit early if samples directory doesn't exist
-if [ ! -d "./samples" ]; then
-  echo "No tests run. `./samples` not found"
+# Exit early if samples don't exist
+if ! find samples -name 'requirements.txt' | grep -q .; then
+  echo "No tests run. './samples/**/requirements.txt' not found"
   exit 0
 fi
 
@@ -33,7 +33,7 @@ export PYTHONUNBUFFERED=1
 env | grep KOKORO
 
 # Install nox
-python3.6 -m pip install --upgrade --quiet nox
+python3.9 -m pip install --upgrade --quiet nox
 
 # Use secrets acessor service account to get secrets
 if [[ -f "${KOKORO_GFILE_DIR}/secrets_viewer_service_account.json" ]]; then
@@ -76,11 +76,11 @@ for file in samples/**/requirements.txt; do
     echo "------------------------------------------------------------"
 
     # Use nox to execute the tests for the project.
-    python3.6 -m nox -s "$RUN_TESTS_SESSION"
+    python3.9 -m nox -s "$RUN_TESTS_SESSION"
     EXIT=$?
 
     # If this is a periodic build, send the test log to the FlakyBot.
-    # See https://github.com/googleapis/repo-automation-bots/tree/master/packages/flakybot.
+    # See https://github.com/googleapis/repo-automation-bots/tree/main/packages/flakybot.
     if [[ $KOKORO_BUILD_ARTIFACTS_SUBDIR = *"periodic"* ]]; then
       chmod +x $KOKORO_GFILE_DIR/linux_amd64/flakybot
       $KOKORO_GFILE_DIR/linux_amd64/flakybot

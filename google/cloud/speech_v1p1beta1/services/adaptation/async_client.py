@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-
-# Copyright 2020 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,25 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 from collections import OrderedDict
 import functools
 import re
-from typing import Dict, Sequence, Tuple, Type, Union
+from typing import Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 import pkg_resources
 
-import google.api_core.client_options as ClientOptions  # type: ignore
-from google.api_core import exceptions  # type: ignore
-from google.api_core import gapic_v1  # type: ignore
-from google.api_core import retry as retries  # type: ignore
-from google.auth import credentials  # type: ignore
+from google.api_core.client_options import ClientOptions
+from google.api_core import exceptions as core_exceptions
+from google.api_core import gapic_v1
+from google.api_core import retry as retries
+from google.auth import credentials as ga_credentials  # type: ignore
 from google.oauth2 import service_account  # type: ignore
+
+try:
+    OptionalRetry = Union[retries.Retry, gapic_v1.method._MethodDefault]
+except AttributeError:  # pragma: NO COVER
+    OptionalRetry = Union[retries.Retry, object]  # type: ignore
 
 from google.cloud.speech_v1p1beta1.services.adaptation import pagers
 from google.cloud.speech_v1p1beta1.types import cloud_speech_adaptation
 from google.cloud.speech_v1p1beta1.types import resource
-from google.protobuf import field_mask_pb2 as field_mask  # type: ignore
-
+from google.protobuf import field_mask_pb2  # type: ignore
 from .transports.base import AdaptationTransport, DEFAULT_CLIENT_INFO
 from .transports.grpc_asyncio import AdaptationGrpcAsyncIOTransport
 from .client import AdaptationClient
@@ -50,25 +52,20 @@ class AdaptationAsyncClient:
     parse_custom_class_path = staticmethod(AdaptationClient.parse_custom_class_path)
     phrase_set_path = staticmethod(AdaptationClient.phrase_set_path)
     parse_phrase_set_path = staticmethod(AdaptationClient.parse_phrase_set_path)
-
     common_billing_account_path = staticmethod(
         AdaptationClient.common_billing_account_path
     )
     parse_common_billing_account_path = staticmethod(
         AdaptationClient.parse_common_billing_account_path
     )
-
     common_folder_path = staticmethod(AdaptationClient.common_folder_path)
     parse_common_folder_path = staticmethod(AdaptationClient.parse_common_folder_path)
-
     common_organization_path = staticmethod(AdaptationClient.common_organization_path)
     parse_common_organization_path = staticmethod(
         AdaptationClient.parse_common_organization_path
     )
-
     common_project_path = staticmethod(AdaptationClient.common_project_path)
     parse_common_project_path = staticmethod(AdaptationClient.parse_common_project_path)
-
     common_location_path = staticmethod(AdaptationClient.common_location_path)
     parse_common_location_path = staticmethod(
         AdaptationClient.parse_common_location_path
@@ -76,7 +73,8 @@ class AdaptationAsyncClient:
 
     @classmethod
     def from_service_account_info(cls, info: dict, *args, **kwargs):
-        """Creates an instance of this client using the provided credentials info.
+        """Creates an instance of this client using the provided credentials
+            info.
 
         Args:
             info (dict): The service account private key info.
@@ -91,7 +89,7 @@ class AdaptationAsyncClient:
     @classmethod
     def from_service_account_file(cls, filename: str, *args, **kwargs):
         """Creates an instance of this client using the provided credentials
-        file.
+            file.
 
         Args:
             filename (str): The path to the service account private key json
@@ -106,9 +104,45 @@ class AdaptationAsyncClient:
 
     from_service_account_json = from_service_account_file
 
+    @classmethod
+    def get_mtls_endpoint_and_cert_source(
+        cls, client_options: Optional[ClientOptions] = None
+    ):
+        """Return the API endpoint and client cert source for mutual TLS.
+
+        The client cert source is determined in the following order:
+        (1) if `GOOGLE_API_USE_CLIENT_CERTIFICATE` environment variable is not "true", the
+        client cert source is None.
+        (2) if `client_options.client_cert_source` is provided, use the provided one; if the
+        default client cert source exists, use the default one; otherwise the client cert
+        source is None.
+
+        The API endpoint is determined in the following order:
+        (1) if `client_options.api_endpoint` if provided, use the provided one.
+        (2) if `GOOGLE_API_USE_CLIENT_CERTIFICATE` environment variable is "always", use the
+        default mTLS endpoint; if the environment variabel is "never", use the default API
+        endpoint; otherwise if client cert source exists, use the default mTLS endpoint, otherwise
+        use the default API endpoint.
+
+        More details can be found at https://google.aip.dev/auth/4114.
+
+        Args:
+            client_options (google.api_core.client_options.ClientOptions): Custom options for the
+                client. Only the `api_endpoint` and `client_cert_source` properties may be used
+                in this method.
+
+        Returns:
+            Tuple[str, Callable[[], Tuple[bytes, bytes]]]: returns the API endpoint and the
+                client cert source to use.
+
+        Raises:
+            google.auth.exceptions.MutualTLSChannelError: If any errors happen.
+        """
+        return AdaptationClient.get_mtls_endpoint_and_cert_source(client_options)  # type: ignore
+
     @property
     def transport(self) -> AdaptationTransport:
-        """Return the transport used by the client instance.
+        """Returns the transport used by the client instance.
 
         Returns:
             AdaptationTransport: The transport used by the client instance.
@@ -122,12 +156,12 @@ class AdaptationAsyncClient:
     def __init__(
         self,
         *,
-        credentials: credentials.Credentials = None,
+        credentials: ga_credentials.Credentials = None,
         transport: Union[str, AdaptationTransport] = "grpc_asyncio",
         client_options: ClientOptions = None,
         client_info: gapic_v1.client_info.ClientInfo = DEFAULT_CLIENT_INFO,
     ) -> None:
-        """Instantiate the adaptation client.
+        """Instantiates the adaptation client.
 
         Args:
             credentials (Optional[google.auth.credentials.Credentials]): The
@@ -159,7 +193,6 @@ class AdaptationAsyncClient:
             google.auth.exceptions.MutualTlsChannelError: If mutual TLS transport
                 creation failed for any reason.
         """
-
         self._client = AdaptationClient(
             credentials=credentials,
             transport=transport,
@@ -169,12 +202,12 @@ class AdaptationAsyncClient:
 
     async def create_phrase_set(
         self,
-        request: cloud_speech_adaptation.CreatePhraseSetRequest = None,
+        request: Union[cloud_speech_adaptation.CreatePhraseSetRequest, dict] = None,
         *,
         parent: str = None,
         phrase_set: resource.PhraseSet = None,
         phrase_set_id: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> resource.PhraseSet:
@@ -183,14 +216,50 @@ class AdaptationAsyncClient:
         in the PhraseSet are favored by the recognition model
         when you send a call that includes the PhraseSet.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            async def sample_create_phrase_set():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationAsyncClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.CreatePhraseSetRequest(
+                    parent="parent_value",
+                    phrase_set_id="phrase_set_id_value",
+                )
+
+                # Make the request
+                response = await client.create_phrase_set(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (:class:`google.cloud.speech_v1p1beta1.types.CreatePhraseSetRequest`):
+            request (Union[google.cloud.speech_v1p1beta1.types.CreatePhraseSetRequest, dict]):
                 The request object. Message sent by the client for the
                 `CreatePhraseSet` method.
             parent (:class:`str`):
                 Required. The parent resource where this phrase set will
                 be created. Format:
-                {api_version}/projects/{project}/locations/{location}/phraseSets
+
+                ``projects/{project}/locations/{location}/phraseSets``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``parent`` field
                 on the ``request`` instance; if ``request`` is provided, this
@@ -201,16 +270,18 @@ class AdaptationAsyncClient:
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
             phrase_set_id (:class:`str`):
-                The ID to use for the phrase set, which will become the
-                final component of the phrase set's resource name.
-
-                This value should be 4-63 characters, and valid
-                characters are /[a-z][0-9]-/.
+                Required. The ID to use for the
+                phrase set, which will become the final
+                component of the phrase set's resource
+                name.
+                This value should restrict to letters,
+                numbers, and hyphens, with the first
+                character a letter, the last a letter or
+                a number, and be 4-63 characters.
 
                 This corresponds to the ``phrase_set_id`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -225,7 +296,7 @@ class AdaptationAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([parent, phrase_set, phrase_set_id])
         if request is not None and has_flattened_params:
@@ -238,7 +309,6 @@ class AdaptationAsyncClient:
 
         # If we have keyword arguments corresponding to fields on the
         # request, apply these.
-
         if parent is not None:
             request.parent = parent
         if phrase_set is not None:
@@ -261,35 +331,74 @@ class AdaptationAsyncClient:
         )
 
         # Send the request.
-        response = await rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = await rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     async def get_phrase_set(
         self,
-        request: cloud_speech_adaptation.GetPhraseSetRequest = None,
+        request: Union[cloud_speech_adaptation.GetPhraseSetRequest, dict] = None,
         *,
         name: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> resource.PhraseSet:
         r"""Get a phrase set.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            async def sample_get_phrase_set():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationAsyncClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.GetPhraseSetRequest(
+                    name="name_value",
+                )
+
+                # Make the request
+                response = await client.get_phrase_set(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (:class:`google.cloud.speech_v1p1beta1.types.GetPhraseSetRequest`):
+            request (Union[google.cloud.speech_v1p1beta1.types.GetPhraseSetRequest, dict]):
                 The request object. Message sent by the client for the
                 `GetPhraseSet` method.
             name (:class:`str`):
                 Required. The name of the phrase set to retrieve.
                 Format:
-                {api_version}/projects/{project}/locations/{location}/phraseSets/{phrase_set}
+
+                ``projects/{project}/locations/{location}/phraseSets/{phrase_set}``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``name`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -304,7 +413,7 @@ class AdaptationAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -317,7 +426,6 @@ class AdaptationAsyncClient:
 
         # If we have keyword arguments corresponding to fields on the
         # request, apply these.
-
         if name is not None:
             request.name = name
 
@@ -336,35 +444,75 @@ class AdaptationAsyncClient:
         )
 
         # Send the request.
-        response = await rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = await rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     async def list_phrase_set(
         self,
-        request: cloud_speech_adaptation.ListPhraseSetRequest = None,
+        request: Union[cloud_speech_adaptation.ListPhraseSetRequest, dict] = None,
         *,
         parent: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.ListPhraseSetAsyncPager:
         r"""List phrase sets.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            async def sample_list_phrase_set():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationAsyncClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.ListPhraseSetRequest(
+                    parent="parent_value",
+                )
+
+                # Make the request
+                page_result = client.list_phrase_set(request=request)
+
+                # Handle the response
+                async for response in page_result:
+                    print(response)
+
         Args:
-            request (:class:`google.cloud.speech_v1p1beta1.types.ListPhraseSetRequest`):
+            request (Union[google.cloud.speech_v1p1beta1.types.ListPhraseSetRequest, dict]):
                 The request object. Message sent by the client for the
                 `ListPhraseSet` method.
             parent (:class:`str`):
-                Required. The parent, which owns this
-                collection of phrase set. Format:
-                projects/{project}/locations/{location}
+                Required. The parent, which owns this collection of
+                phrase set. Format:
+
+                ``projects/{project}/locations/{location}``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``parent`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -381,7 +529,7 @@ class AdaptationAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([parent])
         if request is not None and has_flattened_params:
@@ -394,7 +542,6 @@ class AdaptationAsyncClient:
 
         # If we have keyword arguments corresponding to fields on the
         # request, apply these.
-
         if parent is not None:
             request.parent = parent
 
@@ -413,12 +560,20 @@ class AdaptationAsyncClient:
         )
 
         # Send the request.
-        response = await rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = await rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # This method is paged; wrap the response in a pager, which provides
         # an `__aiter__` convenience method.
         response = pagers.ListPhraseSetAsyncPager(
-            method=rpc, request=request, response=response, metadata=metadata,
+            method=rpc,
+            request=request,
+            response=response,
+            metadata=metadata,
         )
 
         # Done; return the response.
@@ -426,18 +581,43 @@ class AdaptationAsyncClient:
 
     async def update_phrase_set(
         self,
-        request: cloud_speech_adaptation.UpdatePhraseSetRequest = None,
+        request: Union[cloud_speech_adaptation.UpdatePhraseSetRequest, dict] = None,
         *,
         phrase_set: resource.PhraseSet = None,
-        update_mask: field_mask.FieldMask = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        update_mask: field_mask_pb2.FieldMask = None,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> resource.PhraseSet:
         r"""Update a phrase set.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            async def sample_update_phrase_set():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationAsyncClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.UpdatePhraseSetRequest(
+                )
+
+                # Make the request
+                response = await client.update_phrase_set(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (:class:`google.cloud.speech_v1p1beta1.types.UpdatePhraseSetRequest`):
+            request (Union[google.cloud.speech_v1p1beta1.types.UpdatePhraseSetRequest, dict]):
                 The request object. Message sent by the client for the
                 `UpdatePhraseSet` method.
             phrase_set (:class:`google.cloud.speech_v1p1beta1.types.PhraseSet`):
@@ -445,7 +625,16 @@ class AdaptationAsyncClient:
 
                 The phrase set's ``name`` field is used to identify the
                 set to be updated. Format:
-                {api_version}/projects/{project}/locations/{location}/phraseSets/{phrase_set}
+
+                ``projects/{project}/locations/{location}/phraseSets/{phrase_set}``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``phrase_set`` field
                 on the ``request`` instance; if ``request`` is provided, this
@@ -455,7 +644,6 @@ class AdaptationAsyncClient:
                 This corresponds to the ``update_mask`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -470,7 +658,7 @@ class AdaptationAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([phrase_set, update_mask])
         if request is not None and has_flattened_params:
@@ -483,7 +671,6 @@ class AdaptationAsyncClient:
 
         # If we have keyword arguments corresponding to fields on the
         # request, apply these.
-
         if phrase_set is not None:
             request.phrase_set = phrase_set
         if update_mask is not None:
@@ -506,34 +693,62 @@ class AdaptationAsyncClient:
         )
 
         # Send the request.
-        response = await rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = await rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     async def delete_phrase_set(
         self,
-        request: cloud_speech_adaptation.DeletePhraseSetRequest = None,
+        request: Union[cloud_speech_adaptation.DeletePhraseSetRequest, dict] = None,
         *,
         name: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Delete a phrase set.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            async def sample_delete_phrase_set():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationAsyncClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.DeletePhraseSetRequest(
+                    name="name_value",
+                )
+
+                # Make the request
+                await client.delete_phrase_set(request=request)
+
         Args:
-            request (:class:`google.cloud.speech_v1p1beta1.types.DeletePhraseSetRequest`):
+            request (Union[google.cloud.speech_v1p1beta1.types.DeletePhraseSetRequest, dict]):
                 The request object. Message sent by the client for the
                 `DeletePhraseSet` method.
             name (:class:`str`):
                 Required. The name of the phrase set to delete. Format:
-                {api_version}/projects/{project}/locations/{location}/phraseSets/{phrase_set}
+
+                ``projects/{project}/locations/{location}/phraseSets/{phrase_set}``
 
                 This corresponds to the ``name`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -541,7 +756,7 @@ class AdaptationAsyncClient:
                 sent along with the request as metadata.
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -554,7 +769,6 @@ class AdaptationAsyncClient:
 
         # If we have keyword arguments corresponding to fields on the
         # request, apply these.
-
         if name is not None:
             request.name = name
 
@@ -574,30 +788,69 @@ class AdaptationAsyncClient:
 
         # Send the request.
         await rpc(
-            request, retry=retry, timeout=timeout, metadata=metadata,
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
         )
 
     async def create_custom_class(
         self,
-        request: cloud_speech_adaptation.CreateCustomClassRequest = None,
+        request: Union[cloud_speech_adaptation.CreateCustomClassRequest, dict] = None,
         *,
         parent: str = None,
         custom_class: resource.CustomClass = None,
         custom_class_id: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> resource.CustomClass:
         r"""Create a custom class.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            async def sample_create_custom_class():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationAsyncClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.CreateCustomClassRequest(
+                    parent="parent_value",
+                    custom_class_id="custom_class_id_value",
+                )
+
+                # Make the request
+                response = await client.create_custom_class(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (:class:`google.cloud.speech_v1p1beta1.types.CreateCustomClassRequest`):
+            request (Union[google.cloud.speech_v1p1beta1.types.CreateCustomClassRequest, dict]):
                 The request object. Message sent by the client for the
                 `CreateCustomClass` method.
             parent (:class:`str`):
                 Required. The parent resource where this custom class
                 will be created. Format:
-                {api_version}/projects/{project}/locations/{location}/customClasses
+
+                ``projects/{project}/locations/{location}/customClasses``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``parent`` field
                 on the ``request`` instance; if ``request`` is provided, this
@@ -608,16 +861,18 @@ class AdaptationAsyncClient:
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
             custom_class_id (:class:`str`):
-                The ID to use for the custom class, which will become
-                the final component of the custom class' resource name.
-
-                This value should be 4-63 characters, and valid
-                characters are /[a-z][0-9]-/.
+                Required. The ID to use for the
+                custom class, which will become the
+                final component of the custom class'
+                resource name.
+                This value should restrict to letters,
+                numbers, and hyphens, with the first
+                character a letter, the last a letter or
+                a number, and be 4-63 characters.
 
                 This corresponds to the ``custom_class_id`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -636,7 +891,7 @@ class AdaptationAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([parent, custom_class, custom_class_id])
         if request is not None and has_flattened_params:
@@ -649,7 +904,6 @@ class AdaptationAsyncClient:
 
         # If we have keyword arguments corresponding to fields on the
         # request, apply these.
-
         if parent is not None:
             request.parent = parent
         if custom_class is not None:
@@ -672,35 +926,66 @@ class AdaptationAsyncClient:
         )
 
         # Send the request.
-        response = await rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = await rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     async def get_custom_class(
         self,
-        request: cloud_speech_adaptation.GetCustomClassRequest = None,
+        request: Union[cloud_speech_adaptation.GetCustomClassRequest, dict] = None,
         *,
         name: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> resource.CustomClass:
         r"""Get a custom class.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            async def sample_get_custom_class():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationAsyncClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.GetCustomClassRequest(
+                    name="name_value",
+                )
+
+                # Make the request
+                response = await client.get_custom_class(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (:class:`google.cloud.speech_v1p1beta1.types.GetCustomClassRequest`):
+            request (Union[google.cloud.speech_v1p1beta1.types.GetCustomClassRequest, dict]):
                 The request object. Message sent by the client for the
                 `GetCustomClass` method.
             name (:class:`str`):
                 Required. The name of the custom class to retrieve.
                 Format:
-                {api_version}/projects/{project}/locations/{location}/customClasses/{custom_class}
+
+                ``projects/{project}/locations/{location}/customClasses/{custom_class}``
 
                 This corresponds to the ``name`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -719,7 +1004,7 @@ class AdaptationAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -732,7 +1017,6 @@ class AdaptationAsyncClient:
 
         # If we have keyword arguments corresponding to fields on the
         # request, apply these.
-
         if name is not None:
             request.name = name
 
@@ -751,35 +1035,75 @@ class AdaptationAsyncClient:
         )
 
         # Send the request.
-        response = await rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = await rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     async def list_custom_classes(
         self,
-        request: cloud_speech_adaptation.ListCustomClassesRequest = None,
+        request: Union[cloud_speech_adaptation.ListCustomClassesRequest, dict] = None,
         *,
         parent: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.ListCustomClassesAsyncPager:
         r"""List custom classes.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            async def sample_list_custom_classes():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationAsyncClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.ListCustomClassesRequest(
+                    parent="parent_value",
+                )
+
+                # Make the request
+                page_result = client.list_custom_classes(request=request)
+
+                # Handle the response
+                async for response in page_result:
+                    print(response)
+
         Args:
-            request (:class:`google.cloud.speech_v1p1beta1.types.ListCustomClassesRequest`):
+            request (Union[google.cloud.speech_v1p1beta1.types.ListCustomClassesRequest, dict]):
                 The request object. Message sent by the client for the
                 `ListCustomClasses` method.
             parent (:class:`str`):
                 Required. The parent, which owns this collection of
                 custom classes. Format:
-                {api_version}/projects/{project}/locations/{location}/customClasses
+
+                ``projects/{project}/locations/{location}/customClasses``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``parent`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -796,7 +1120,7 @@ class AdaptationAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([parent])
         if request is not None and has_flattened_params:
@@ -809,7 +1133,6 @@ class AdaptationAsyncClient:
 
         # If we have keyword arguments corresponding to fields on the
         # request, apply these.
-
         if parent is not None:
             request.parent = parent
 
@@ -828,12 +1151,20 @@ class AdaptationAsyncClient:
         )
 
         # Send the request.
-        response = await rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = await rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # This method is paged; wrap the response in a pager, which provides
         # an `__aiter__` convenience method.
         response = pagers.ListCustomClassesAsyncPager(
-            method=rpc, request=request, response=response, metadata=metadata,
+            method=rpc,
+            request=request,
+            response=response,
+            metadata=metadata,
         )
 
         # Done; return the response.
@@ -841,18 +1172,43 @@ class AdaptationAsyncClient:
 
     async def update_custom_class(
         self,
-        request: cloud_speech_adaptation.UpdateCustomClassRequest = None,
+        request: Union[cloud_speech_adaptation.UpdateCustomClassRequest, dict] = None,
         *,
         custom_class: resource.CustomClass = None,
-        update_mask: field_mask.FieldMask = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        update_mask: field_mask_pb2.FieldMask = None,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> resource.CustomClass:
         r"""Update a custom class.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            async def sample_update_custom_class():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationAsyncClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.UpdateCustomClassRequest(
+                )
+
+                # Make the request
+                response = await client.update_custom_class(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (:class:`google.cloud.speech_v1p1beta1.types.UpdateCustomClassRequest`):
+            request (Union[google.cloud.speech_v1p1beta1.types.UpdateCustomClassRequest, dict]):
                 The request object. Message sent by the client for the
                 `UpdateCustomClass` method.
             custom_class (:class:`google.cloud.speech_v1p1beta1.types.CustomClass`):
@@ -860,7 +1216,16 @@ class AdaptationAsyncClient:
 
                 The custom class's ``name`` field is used to identify
                 the custom class to be updated. Format:
-                {api_version}/projects/{project}/locations/{location}/customClasses/{custom_class}
+
+                ``projects/{project}/locations/{location}/customClasses/{custom_class}``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``custom_class`` field
                 on the ``request`` instance; if ``request`` is provided, this
@@ -870,7 +1235,6 @@ class AdaptationAsyncClient:
                 This corresponds to the ``update_mask`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -889,7 +1253,7 @@ class AdaptationAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([custom_class, update_mask])
         if request is not None and has_flattened_params:
@@ -902,7 +1266,6 @@ class AdaptationAsyncClient:
 
         # If we have keyword arguments corresponding to fields on the
         # request, apply these.
-
         if custom_class is not None:
             request.custom_class = custom_class
         if update_mask is not None:
@@ -925,35 +1288,71 @@ class AdaptationAsyncClient:
         )
 
         # Send the request.
-        response = await rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = await rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     async def delete_custom_class(
         self,
-        request: cloud_speech_adaptation.DeleteCustomClassRequest = None,
+        request: Union[cloud_speech_adaptation.DeleteCustomClassRequest, dict] = None,
         *,
         name: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Delete a custom class.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            async def sample_delete_custom_class():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationAsyncClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.DeleteCustomClassRequest(
+                    name="name_value",
+                )
+
+                # Make the request
+                await client.delete_custom_class(request=request)
+
         Args:
-            request (:class:`google.cloud.speech_v1p1beta1.types.DeleteCustomClassRequest`):
+            request (Union[google.cloud.speech_v1p1beta1.types.DeleteCustomClassRequest, dict]):
                 The request object. Message sent by the client for the
                 `DeleteCustomClass` method.
             name (:class:`str`):
                 Required. The name of the custom class to delete.
                 Format:
-                {api_version}/projects/{project}/locations/{location}/customClasses/{custom_class}
+
+                ``projects/{project}/locations/{location}/customClasses/{custom_class}``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``name`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -961,7 +1360,7 @@ class AdaptationAsyncClient:
                 sent along with the request as metadata.
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -974,7 +1373,6 @@ class AdaptationAsyncClient:
 
         # If we have keyword arguments corresponding to fields on the
         # request, apply these.
-
         if name is not None:
             request.name = name
 
@@ -994,13 +1392,24 @@ class AdaptationAsyncClient:
 
         # Send the request.
         await rpc(
-            request, retry=retry, timeout=timeout, metadata=metadata,
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
         )
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.transport.close()
 
 
 try:
     DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
-        gapic_version=pkg_resources.get_distribution("google-cloud-speech",).version,
+        gapic_version=pkg_resources.get_distribution(
+            "google-cloud-speech",
+        ).version,
     )
 except pkg_resources.DistributionNotFound:
     DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo()

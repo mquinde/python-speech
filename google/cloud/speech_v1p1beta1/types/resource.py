@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-
-# Copyright 2020 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 import proto  # type: ignore
 
 
 __protobuf__ = proto.module(
     package="google.cloud.speech.v1p1beta1",
-    manifest={"CustomClass", "PhraseSet", "SpeechAdaptation",},
+    manifest={
+        "CustomClass",
+        "PhraseSet",
+        "SpeechAdaptation",
+        "TranscriptNormalization",
+    },
 )
 
 
@@ -48,13 +51,24 @@ class CustomClass(proto.Message):
                 The class item's value.
         """
 
-        value = proto.Field(proto.STRING, number=1)
+        value = proto.Field(
+            proto.STRING,
+            number=1,
+        )
 
-    name = proto.Field(proto.STRING, number=1)
-
-    custom_class_id = proto.Field(proto.STRING, number=2)
-
-    items = proto.RepeatedField(proto.MESSAGE, number=3, message=ClassItem,)
+    name = proto.Field(
+        proto.STRING,
+        number=1,
+    )
+    custom_class_id = proto.Field(
+        proto.STRING,
+        number=2,
+    )
+    items = proto.RepeatedField(
+        proto.MESSAGE,
+        number=3,
+        message=ClassItem,
+    )
 
 
 class PhraseSet(proto.Message):
@@ -104,6 +118,13 @@ class PhraseSet(proto.Message):
         resources, use the class' id wrapped in ``${}`` (e.g.
         ``${my-months}``).
 
+        Speech-to-Text supports three locations: ``global``, ``us`` (US
+        North America), and ``eu`` (Europe). If you are calling the
+        ``speech.googleapis.com`` endpoint, use the ``global`` location. To
+        specify a region, use a `regional
+        endpoint </speech-to-text/docs/endpoints>`__ with matching ``us`` or
+        ``eu`` location value.
+
         Attributes:
             value (str):
                 The phrase itself.
@@ -112,25 +133,37 @@ class PhraseSet(proto.Message):
                 Positive value will increase the probability that a specific
                 phrase will be recognized over other similar sounding
                 phrases. The higher the boost, the higher the chance of
-                false positive recognition as well. Negative boost values
-                would correspond to anti-biasing. Anti-biasing is not
-                enabled, so negative boost will simply be ignored. Though
-                ``boost`` can accept a wide range of positive values, most
-                use cases are best served with values between 0 and 20. We
-                recommend using a binary search approach to finding the
-                optimal value for your use case. Speech recognition will
-                skip PhraseSets with a boost value of 0.
+                false positive recognition as well. Negative boost will
+                simply be ignored. Though ``boost`` can accept a wide range
+                of positive values, most use cases are best served with
+                values between 0 and 20. We recommend using a binary search
+                approach to finding the optimal value for your use case.
+                Speech recognition will skip PhraseSets with a boost value
+                of 0.
         """
 
-        value = proto.Field(proto.STRING, number=1)
+        value = proto.Field(
+            proto.STRING,
+            number=1,
+        )
+        boost = proto.Field(
+            proto.FLOAT,
+            number=2,
+        )
 
-        boost = proto.Field(proto.FLOAT, number=2)
-
-    name = proto.Field(proto.STRING, number=1)
-
-    phrases = proto.RepeatedField(proto.MESSAGE, number=2, message=Phrase,)
-
-    boost = proto.Field(proto.FLOAT, number=4)
+    name = proto.Field(
+        proto.STRING,
+        number=1,
+    )
+    phrases = proto.RepeatedField(
+        proto.MESSAGE,
+        number=2,
+        message=Phrase,
+    )
+    boost = proto.Field(
+        proto.FLOAT,
+        number=4,
+    )
 
 
 class SpeechAdaptation(proto.Message):
@@ -152,12 +185,69 @@ class SpeechAdaptation(proto.Message):
             ``custom_class_id``.
     """
 
-    phrase_sets = proto.RepeatedField(proto.MESSAGE, number=1, message="PhraseSet",)
-
-    phrase_set_references = proto.RepeatedField(proto.STRING, number=2)
-
+    phrase_sets = proto.RepeatedField(
+        proto.MESSAGE,
+        number=1,
+        message="PhraseSet",
+    )
+    phrase_set_references = proto.RepeatedField(
+        proto.STRING,
+        number=2,
+    )
     custom_classes = proto.RepeatedField(
-        proto.MESSAGE, number=3, message="CustomClass",
+        proto.MESSAGE,
+        number=3,
+        message="CustomClass",
+    )
+
+
+class TranscriptNormalization(proto.Message):
+    r"""Transcription normalization configuration. Use transcription
+    normalization to automatically replace parts of the transcript
+    with phrases of your choosing. For StreamingRecognize, this
+    normalization only applies to stable partial transcripts
+    (stability > 0.8) and final transcripts.
+
+    Attributes:
+        entries (Sequence[google.cloud.speech_v1p1beta1.types.TranscriptNormalization.Entry]):
+            A list of replacement entries. We will perform replacement
+            with one entry at a time. For example, the second entry in
+            ["cat" => "dog", "mountain cat" => "mountain dog"] will
+            never be applied because we will always process the first
+            entry before it. At most 100 entries.
+    """
+
+    class Entry(proto.Message):
+        r"""A single replacement configuration.
+
+        Attributes:
+            search (str):
+                What to replace. Max length is 100
+                characters.
+            replace (str):
+                What to replace with. Max length is 100
+                characters.
+            case_sensitive (bool):
+                Whether the search is case sensitive.
+        """
+
+        search = proto.Field(
+            proto.STRING,
+            number=1,
+        )
+        replace = proto.Field(
+            proto.STRING,
+            number=2,
+        )
+        case_sensitive = proto.Field(
+            proto.BOOL,
+            number=3,
+        )
+
+    entries = proto.RepeatedField(
+        proto.MESSAGE,
+        number=1,
+        message=Entry,
     )
 
 

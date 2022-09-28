@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-
-# Copyright 2020 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,29 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 from collections import OrderedDict
-from distutils import util
 import os
 import re
-from typing import Callable, Dict, Optional, Sequence, Tuple, Type, Union
+from typing import Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 import pkg_resources
 
-from google.api_core import client_options as client_options_lib  # type: ignore
-from google.api_core import exceptions  # type: ignore
-from google.api_core import gapic_v1  # type: ignore
-from google.api_core import retry as retries  # type: ignore
-from google.auth import credentials  # type: ignore
+from google.api_core import client_options as client_options_lib
+from google.api_core import exceptions as core_exceptions
+from google.api_core import gapic_v1
+from google.api_core import retry as retries
+from google.auth import credentials as ga_credentials  # type: ignore
 from google.auth.transport import mtls  # type: ignore
 from google.auth.transport.grpc import SslCredentials  # type: ignore
 from google.auth.exceptions import MutualTLSChannelError  # type: ignore
 from google.oauth2 import service_account  # type: ignore
 
+try:
+    OptionalRetry = Union[retries.Retry, gapic_v1.method._MethodDefault]
+except AttributeError:  # pragma: NO COVER
+    OptionalRetry = Union[retries.Retry, object]  # type: ignore
+
 from google.cloud.speech_v1p1beta1.services.adaptation import pagers
 from google.cloud.speech_v1p1beta1.types import cloud_speech_adaptation
 from google.cloud.speech_v1p1beta1.types import resource
-from google.protobuf import field_mask_pb2 as field_mask  # type: ignore
-
+from google.protobuf import field_mask_pb2  # type: ignore
 from .transports.base import AdaptationTransport, DEFAULT_CLIENT_INFO
 from .transports.grpc import AdaptationGrpcTransport
 from .transports.grpc_asyncio import AdaptationGrpcAsyncIOTransport
@@ -54,8 +55,11 @@ class AdaptationClientMeta(type):
     _transport_registry["grpc"] = AdaptationGrpcTransport
     _transport_registry["grpc_asyncio"] = AdaptationGrpcAsyncIOTransport
 
-    def get_transport_class(cls, label: str = None,) -> Type[AdaptationTransport]:
-        """Return an appropriate transport class.
+    def get_transport_class(
+        cls,
+        label: str = None,
+    ) -> Type[AdaptationTransport]:
+        """Returns an appropriate transport class.
 
         Args:
             label: The name of the desired transport. If none is
@@ -78,7 +82,8 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
     @staticmethod
     def _get_default_mtls_endpoint(api_endpoint):
-        """Convert api endpoint to mTLS endpoint.
+        """Converts api endpoint to mTLS endpoint.
+
         Convert "*.sandbox.googleapis.com" and "*.googleapis.com" to
         "*.mtls.sandbox.googleapis.com" and "*.mtls.googleapis.com" respectively.
         Args:
@@ -112,7 +117,8 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
     @classmethod
     def from_service_account_info(cls, info: dict, *args, **kwargs):
-        """Creates an instance of this client using the provided credentials info.
+        """Creates an instance of this client using the provided credentials
+            info.
 
         Args:
             info (dict): The service account private key info.
@@ -129,7 +135,7 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
     @classmethod
     def from_service_account_file(cls, filename: str, *args, **kwargs):
         """Creates an instance of this client using the provided credentials
-        file.
+            file.
 
         Args:
             filename (str): The path to the service account private key json
@@ -148,23 +154,30 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
     @property
     def transport(self) -> AdaptationTransport:
-        """Return the transport used by the client instance.
+        """Returns the transport used by the client instance.
 
         Returns:
-            AdaptationTransport: The transport used by the client instance.
+            AdaptationTransport: The transport used by the client
+                instance.
         """
         return self._transport
 
     @staticmethod
-    def custom_class_path(project: str, location: str, custom_class: str,) -> str:
-        """Return a fully-qualified custom_class string."""
+    def custom_class_path(
+        project: str,
+        location: str,
+        custom_class: str,
+    ) -> str:
+        """Returns a fully-qualified custom_class string."""
         return "projects/{project}/locations/{location}/customClasses/{custom_class}".format(
-            project=project, location=location, custom_class=custom_class,
+            project=project,
+            location=location,
+            custom_class=custom_class,
         )
 
     @staticmethod
     def parse_custom_class_path(path: str) -> Dict[str, str]:
-        """Parse a custom_class path into its component segments."""
+        """Parses a custom_class path into its component segments."""
         m = re.match(
             r"^projects/(?P<project>.+?)/locations/(?P<location>.+?)/customClasses/(?P<custom_class>.+?)$",
             path,
@@ -172,15 +185,21 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         return m.groupdict() if m else {}
 
     @staticmethod
-    def phrase_set_path(project: str, location: str, phrase_set: str,) -> str:
-        """Return a fully-qualified phrase_set string."""
+    def phrase_set_path(
+        project: str,
+        location: str,
+        phrase_set: str,
+    ) -> str:
+        """Returns a fully-qualified phrase_set string."""
         return "projects/{project}/locations/{location}/phraseSets/{phrase_set}".format(
-            project=project, location=location, phrase_set=phrase_set,
+            project=project,
+            location=location,
+            phrase_set=phrase_set,
         )
 
     @staticmethod
     def parse_phrase_set_path(path: str) -> Dict[str, str]:
-        """Parse a phrase_set path into its component segments."""
+        """Parses a phrase_set path into its component segments."""
         m = re.match(
             r"^projects/(?P<project>.+?)/locations/(?P<location>.+?)/phraseSets/(?P<phrase_set>.+?)$",
             path,
@@ -188,8 +207,10 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         return m.groupdict() if m else {}
 
     @staticmethod
-    def common_billing_account_path(billing_account: str,) -> str:
-        """Return a fully-qualified billing_account string."""
+    def common_billing_account_path(
+        billing_account: str,
+    ) -> str:
+        """Returns a fully-qualified billing_account string."""
         return "billingAccounts/{billing_account}".format(
             billing_account=billing_account,
         )
@@ -201,9 +222,13 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         return m.groupdict() if m else {}
 
     @staticmethod
-    def common_folder_path(folder: str,) -> str:
-        """Return a fully-qualified folder string."""
-        return "folders/{folder}".format(folder=folder,)
+    def common_folder_path(
+        folder: str,
+    ) -> str:
+        """Returns a fully-qualified folder string."""
+        return "folders/{folder}".format(
+            folder=folder,
+        )
 
     @staticmethod
     def parse_common_folder_path(path: str) -> Dict[str, str]:
@@ -212,9 +237,13 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         return m.groupdict() if m else {}
 
     @staticmethod
-    def common_organization_path(organization: str,) -> str:
-        """Return a fully-qualified organization string."""
-        return "organizations/{organization}".format(organization=organization,)
+    def common_organization_path(
+        organization: str,
+    ) -> str:
+        """Returns a fully-qualified organization string."""
+        return "organizations/{organization}".format(
+            organization=organization,
+        )
 
     @staticmethod
     def parse_common_organization_path(path: str) -> Dict[str, str]:
@@ -223,9 +252,13 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         return m.groupdict() if m else {}
 
     @staticmethod
-    def common_project_path(project: str,) -> str:
-        """Return a fully-qualified project string."""
-        return "projects/{project}".format(project=project,)
+    def common_project_path(
+        project: str,
+    ) -> str:
+        """Returns a fully-qualified project string."""
+        return "projects/{project}".format(
+            project=project,
+        )
 
     @staticmethod
     def parse_common_project_path(path: str) -> Dict[str, str]:
@@ -234,10 +267,14 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         return m.groupdict() if m else {}
 
     @staticmethod
-    def common_location_path(project: str, location: str,) -> str:
-        """Return a fully-qualified location string."""
+    def common_location_path(
+        project: str,
+        location: str,
+    ) -> str:
+        """Returns a fully-qualified location string."""
         return "projects/{project}/locations/{location}".format(
-            project=project, location=location,
+            project=project,
+            location=location,
         )
 
     @staticmethod
@@ -246,15 +283,82 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         m = re.match(r"^projects/(?P<project>.+?)/locations/(?P<location>.+?)$", path)
         return m.groupdict() if m else {}
 
+    @classmethod
+    def get_mtls_endpoint_and_cert_source(
+        cls, client_options: Optional[client_options_lib.ClientOptions] = None
+    ):
+        """Return the API endpoint and client cert source for mutual TLS.
+
+        The client cert source is determined in the following order:
+        (1) if `GOOGLE_API_USE_CLIENT_CERTIFICATE` environment variable is not "true", the
+        client cert source is None.
+        (2) if `client_options.client_cert_source` is provided, use the provided one; if the
+        default client cert source exists, use the default one; otherwise the client cert
+        source is None.
+
+        The API endpoint is determined in the following order:
+        (1) if `client_options.api_endpoint` if provided, use the provided one.
+        (2) if `GOOGLE_API_USE_CLIENT_CERTIFICATE` environment variable is "always", use the
+        default mTLS endpoint; if the environment variabel is "never", use the default API
+        endpoint; otherwise if client cert source exists, use the default mTLS endpoint, otherwise
+        use the default API endpoint.
+
+        More details can be found at https://google.aip.dev/auth/4114.
+
+        Args:
+            client_options (google.api_core.client_options.ClientOptions): Custom options for the
+                client. Only the `api_endpoint` and `client_cert_source` properties may be used
+                in this method.
+
+        Returns:
+            Tuple[str, Callable[[], Tuple[bytes, bytes]]]: returns the API endpoint and the
+                client cert source to use.
+
+        Raises:
+            google.auth.exceptions.MutualTLSChannelError: If any errors happen.
+        """
+        if client_options is None:
+            client_options = client_options_lib.ClientOptions()
+        use_client_cert = os.getenv("GOOGLE_API_USE_CLIENT_CERTIFICATE", "false")
+        use_mtls_endpoint = os.getenv("GOOGLE_API_USE_MTLS_ENDPOINT", "auto")
+        if use_client_cert not in ("true", "false"):
+            raise ValueError(
+                "Environment variable `GOOGLE_API_USE_CLIENT_CERTIFICATE` must be either `true` or `false`"
+            )
+        if use_mtls_endpoint not in ("auto", "never", "always"):
+            raise MutualTLSChannelError(
+                "Environment variable `GOOGLE_API_USE_MTLS_ENDPOINT` must be `never`, `auto` or `always`"
+            )
+
+        # Figure out the client cert source to use.
+        client_cert_source = None
+        if use_client_cert == "true":
+            if client_options.client_cert_source:
+                client_cert_source = client_options.client_cert_source
+            elif mtls.has_default_client_cert_source():
+                client_cert_source = mtls.default_client_cert_source()
+
+        # Figure out which api endpoint to use.
+        if client_options.api_endpoint is not None:
+            api_endpoint = client_options.api_endpoint
+        elif use_mtls_endpoint == "always" or (
+            use_mtls_endpoint == "auto" and client_cert_source
+        ):
+            api_endpoint = cls.DEFAULT_MTLS_ENDPOINT
+        else:
+            api_endpoint = cls.DEFAULT_ENDPOINT
+
+        return api_endpoint, client_cert_source
+
     def __init__(
         self,
         *,
-        credentials: Optional[credentials.Credentials] = None,
+        credentials: Optional[ga_credentials.Credentials] = None,
         transport: Union[str, AdaptationTransport, None] = None,
         client_options: Optional[client_options_lib.ClientOptions] = None,
         client_info: gapic_v1.client_info.ClientInfo = DEFAULT_CLIENT_INFO,
     ) -> None:
-        """Instantiate the adaptation client.
+        """Instantiates the adaptation client.
 
         Args:
             credentials (Optional[google.auth.credentials.Credentials]): The
@@ -296,58 +400,42 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         if client_options is None:
             client_options = client_options_lib.ClientOptions()
 
-        # Create SSL credentials for mutual TLS if needed.
-        use_client_cert = bool(
-            util.strtobool(os.getenv("GOOGLE_API_USE_CLIENT_CERTIFICATE", "false"))
+        api_endpoint, client_cert_source_func = self.get_mtls_endpoint_and_cert_source(
+            client_options
         )
 
-        client_cert_source_func = None
-        is_mtls = False
-        if use_client_cert:
-            if client_options.client_cert_source:
-                is_mtls = True
-                client_cert_source_func = client_options.client_cert_source
-            else:
-                is_mtls = mtls.has_default_client_cert_source()
-                client_cert_source_func = (
-                    mtls.default_client_cert_source() if is_mtls else None
-                )
-
-        # Figure out which api endpoint to use.
-        if client_options.api_endpoint is not None:
-            api_endpoint = client_options.api_endpoint
-        else:
-            use_mtls_env = os.getenv("GOOGLE_API_USE_MTLS_ENDPOINT", "auto")
-            if use_mtls_env == "never":
-                api_endpoint = self.DEFAULT_ENDPOINT
-            elif use_mtls_env == "always":
-                api_endpoint = self.DEFAULT_MTLS_ENDPOINT
-            elif use_mtls_env == "auto":
-                api_endpoint = (
-                    self.DEFAULT_MTLS_ENDPOINT if is_mtls else self.DEFAULT_ENDPOINT
-                )
-            else:
-                raise MutualTLSChannelError(
-                    "Unsupported GOOGLE_API_USE_MTLS_ENDPOINT value. Accepted values: never, auto, always"
-                )
+        api_key_value = getattr(client_options, "api_key", None)
+        if api_key_value and credentials:
+            raise ValueError(
+                "client_options.api_key and credentials are mutually exclusive"
+            )
 
         # Save or instantiate the transport.
         # Ordinarily, we provide the transport, but allowing a custom transport
         # instance provides an extensibility point for unusual situations.
         if isinstance(transport, AdaptationTransport):
             # transport is a AdaptationTransport instance.
-            if credentials or client_options.credentials_file:
+            if credentials or client_options.credentials_file or api_key_value:
                 raise ValueError(
                     "When providing a transport instance, "
                     "provide its credentials directly."
                 )
             if client_options.scopes:
                 raise ValueError(
-                    "When providing a transport instance, "
-                    "provide its scopes directly."
+                    "When providing a transport instance, provide its scopes "
+                    "directly."
                 )
             self._transport = transport
         else:
+            import google.auth._default  # type: ignore
+
+            if api_key_value and hasattr(
+                google.auth._default, "get_api_key_credentials"
+            ):
+                credentials = google.auth._default.get_api_key_credentials(
+                    api_key_value
+                )
+
             Transport = type(self).get_transport_class(transport)
             self._transport = Transport(
                 credentials=credentials,
@@ -357,16 +445,18 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
                 client_cert_source_for_mtls=client_cert_source_func,
                 quota_project_id=client_options.quota_project_id,
                 client_info=client_info,
+                always_use_jwt_access=True,
+                api_audience=client_options.api_audience,
             )
 
     def create_phrase_set(
         self,
-        request: cloud_speech_adaptation.CreatePhraseSetRequest = None,
+        request: Union[cloud_speech_adaptation.CreatePhraseSetRequest, dict] = None,
         *,
         parent: str = None,
         phrase_set: resource.PhraseSet = None,
         phrase_set_id: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> resource.PhraseSet:
@@ -375,14 +465,50 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         in the PhraseSet are favored by the recognition model
         when you send a call that includes the PhraseSet.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            def sample_create_phrase_set():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.CreatePhraseSetRequest(
+                    parent="parent_value",
+                    phrase_set_id="phrase_set_id_value",
+                )
+
+                # Make the request
+                response = client.create_phrase_set(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (google.cloud.speech_v1p1beta1.types.CreatePhraseSetRequest):
+            request (Union[google.cloud.speech_v1p1beta1.types.CreatePhraseSetRequest, dict]):
                 The request object. Message sent by the client for the
                 `CreatePhraseSet` method.
             parent (str):
                 Required. The parent resource where this phrase set will
                 be created. Format:
-                {api_version}/projects/{project}/locations/{location}/phraseSets
+
+                ``projects/{project}/locations/{location}/phraseSets``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``parent`` field
                 on the ``request`` instance; if ``request`` is provided, this
@@ -393,16 +519,18 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
             phrase_set_id (str):
-                The ID to use for the phrase set, which will become the
-                final component of the phrase set's resource name.
-
-                This value should be 4-63 characters, and valid
-                characters are /[a-z][0-9]-/.
+                Required. The ID to use for the
+                phrase set, which will become the final
+                component of the phrase set's resource
+                name.
+                This value should restrict to letters,
+                numbers, and hyphens, with the first
+                character a letter, the last a letter or
+                a number, and be 4-63 characters.
 
                 This corresponds to the ``phrase_set_id`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -417,7 +545,7 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([parent, phrase_set, phrase_set_id])
         if request is not None and has_flattened_params:
@@ -432,10 +560,8 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         # there are no flattened fields.
         if not isinstance(request, cloud_speech_adaptation.CreatePhraseSetRequest):
             request = cloud_speech_adaptation.CreatePhraseSetRequest(request)
-
             # If we have keyword arguments corresponding to fields on the
             # request, apply these.
-
             if parent is not None:
                 request.parent = parent
             if phrase_set is not None:
@@ -454,35 +580,74 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         )
 
         # Send the request.
-        response = rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     def get_phrase_set(
         self,
-        request: cloud_speech_adaptation.GetPhraseSetRequest = None,
+        request: Union[cloud_speech_adaptation.GetPhraseSetRequest, dict] = None,
         *,
         name: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> resource.PhraseSet:
         r"""Get a phrase set.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            def sample_get_phrase_set():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.GetPhraseSetRequest(
+                    name="name_value",
+                )
+
+                # Make the request
+                response = client.get_phrase_set(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (google.cloud.speech_v1p1beta1.types.GetPhraseSetRequest):
+            request (Union[google.cloud.speech_v1p1beta1.types.GetPhraseSetRequest, dict]):
                 The request object. Message sent by the client for the
                 `GetPhraseSet` method.
             name (str):
                 Required. The name of the phrase set to retrieve.
                 Format:
-                {api_version}/projects/{project}/locations/{location}/phraseSets/{phrase_set}
+
+                ``projects/{project}/locations/{location}/phraseSets/{phrase_set}``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``name`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -497,7 +662,7 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -512,10 +677,8 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         # there are no flattened fields.
         if not isinstance(request, cloud_speech_adaptation.GetPhraseSetRequest):
             request = cloud_speech_adaptation.GetPhraseSetRequest(request)
-
             # If we have keyword arguments corresponding to fields on the
             # request, apply these.
-
             if name is not None:
                 request.name = name
 
@@ -530,35 +693,75 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         )
 
         # Send the request.
-        response = rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     def list_phrase_set(
         self,
-        request: cloud_speech_adaptation.ListPhraseSetRequest = None,
+        request: Union[cloud_speech_adaptation.ListPhraseSetRequest, dict] = None,
         *,
         parent: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.ListPhraseSetPager:
         r"""List phrase sets.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            def sample_list_phrase_set():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.ListPhraseSetRequest(
+                    parent="parent_value",
+                )
+
+                # Make the request
+                page_result = client.list_phrase_set(request=request)
+
+                # Handle the response
+                for response in page_result:
+                    print(response)
+
         Args:
-            request (google.cloud.speech_v1p1beta1.types.ListPhraseSetRequest):
+            request (Union[google.cloud.speech_v1p1beta1.types.ListPhraseSetRequest, dict]):
                 The request object. Message sent by the client for the
                 `ListPhraseSet` method.
             parent (str):
-                Required. The parent, which owns this
-                collection of phrase set. Format:
-                projects/{project}/locations/{location}
+                Required. The parent, which owns this collection of
+                phrase set. Format:
+
+                ``projects/{project}/locations/{location}``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``parent`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -575,7 +778,7 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([parent])
         if request is not None and has_flattened_params:
@@ -590,10 +793,8 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         # there are no flattened fields.
         if not isinstance(request, cloud_speech_adaptation.ListPhraseSetRequest):
             request = cloud_speech_adaptation.ListPhraseSetRequest(request)
-
             # If we have keyword arguments corresponding to fields on the
             # request, apply these.
-
             if parent is not None:
                 request.parent = parent
 
@@ -608,12 +809,20 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         )
 
         # Send the request.
-        response = rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # This method is paged; wrap the response in a pager, which provides
         # an `__iter__` convenience method.
         response = pagers.ListPhraseSetPager(
-            method=rpc, request=request, response=response, metadata=metadata,
+            method=rpc,
+            request=request,
+            response=response,
+            metadata=metadata,
         )
 
         # Done; return the response.
@@ -621,18 +830,43 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
     def update_phrase_set(
         self,
-        request: cloud_speech_adaptation.UpdatePhraseSetRequest = None,
+        request: Union[cloud_speech_adaptation.UpdatePhraseSetRequest, dict] = None,
         *,
         phrase_set: resource.PhraseSet = None,
-        update_mask: field_mask.FieldMask = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        update_mask: field_mask_pb2.FieldMask = None,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> resource.PhraseSet:
         r"""Update a phrase set.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            def sample_update_phrase_set():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.UpdatePhraseSetRequest(
+                )
+
+                # Make the request
+                response = client.update_phrase_set(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (google.cloud.speech_v1p1beta1.types.UpdatePhraseSetRequest):
+            request (Union[google.cloud.speech_v1p1beta1.types.UpdatePhraseSetRequest, dict]):
                 The request object. Message sent by the client for the
                 `UpdatePhraseSet` method.
             phrase_set (google.cloud.speech_v1p1beta1.types.PhraseSet):
@@ -640,7 +874,16 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
                 The phrase set's ``name`` field is used to identify the
                 set to be updated. Format:
-                {api_version}/projects/{project}/locations/{location}/phraseSets/{phrase_set}
+
+                ``projects/{project}/locations/{location}/phraseSets/{phrase_set}``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``phrase_set`` field
                 on the ``request`` instance; if ``request`` is provided, this
@@ -650,7 +893,6 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
                 This corresponds to the ``update_mask`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -665,7 +907,7 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([phrase_set, update_mask])
         if request is not None and has_flattened_params:
@@ -680,10 +922,8 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         # there are no flattened fields.
         if not isinstance(request, cloud_speech_adaptation.UpdatePhraseSetRequest):
             request = cloud_speech_adaptation.UpdatePhraseSetRequest(request)
-
             # If we have keyword arguments corresponding to fields on the
             # request, apply these.
-
             if phrase_set is not None:
                 request.phrase_set = phrase_set
             if update_mask is not None:
@@ -702,34 +942,62 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         )
 
         # Send the request.
-        response = rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     def delete_phrase_set(
         self,
-        request: cloud_speech_adaptation.DeletePhraseSetRequest = None,
+        request: Union[cloud_speech_adaptation.DeletePhraseSetRequest, dict] = None,
         *,
         name: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Delete a phrase set.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            def sample_delete_phrase_set():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.DeletePhraseSetRequest(
+                    name="name_value",
+                )
+
+                # Make the request
+                client.delete_phrase_set(request=request)
+
         Args:
-            request (google.cloud.speech_v1p1beta1.types.DeletePhraseSetRequest):
+            request (Union[google.cloud.speech_v1p1beta1.types.DeletePhraseSetRequest, dict]):
                 The request object. Message sent by the client for the
                 `DeletePhraseSet` method.
             name (str):
                 Required. The name of the phrase set to delete. Format:
-                {api_version}/projects/{project}/locations/{location}/phraseSets/{phrase_set}
+
+                ``projects/{project}/locations/{location}/phraseSets/{phrase_set}``
 
                 This corresponds to the ``name`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -737,7 +1005,7 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
                 sent along with the request as metadata.
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -752,10 +1020,8 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         # there are no flattened fields.
         if not isinstance(request, cloud_speech_adaptation.DeletePhraseSetRequest):
             request = cloud_speech_adaptation.DeletePhraseSetRequest(request)
-
             # If we have keyword arguments corresponding to fields on the
             # request, apply these.
-
             if name is not None:
                 request.name = name
 
@@ -771,30 +1037,69 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
         # Send the request.
         rpc(
-            request, retry=retry, timeout=timeout, metadata=metadata,
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
         )
 
     def create_custom_class(
         self,
-        request: cloud_speech_adaptation.CreateCustomClassRequest = None,
+        request: Union[cloud_speech_adaptation.CreateCustomClassRequest, dict] = None,
         *,
         parent: str = None,
         custom_class: resource.CustomClass = None,
         custom_class_id: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> resource.CustomClass:
         r"""Create a custom class.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            def sample_create_custom_class():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.CreateCustomClassRequest(
+                    parent="parent_value",
+                    custom_class_id="custom_class_id_value",
+                )
+
+                # Make the request
+                response = client.create_custom_class(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (google.cloud.speech_v1p1beta1.types.CreateCustomClassRequest):
+            request (Union[google.cloud.speech_v1p1beta1.types.CreateCustomClassRequest, dict]):
                 The request object. Message sent by the client for the
                 `CreateCustomClass` method.
             parent (str):
                 Required. The parent resource where this custom class
                 will be created. Format:
-                {api_version}/projects/{project}/locations/{location}/customClasses
+
+                ``projects/{project}/locations/{location}/customClasses``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``parent`` field
                 on the ``request`` instance; if ``request`` is provided, this
@@ -805,16 +1110,18 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
             custom_class_id (str):
-                The ID to use for the custom class, which will become
-                the final component of the custom class' resource name.
-
-                This value should be 4-63 characters, and valid
-                characters are /[a-z][0-9]-/.
+                Required. The ID to use for the
+                custom class, which will become the
+                final component of the custom class'
+                resource name.
+                This value should restrict to letters,
+                numbers, and hyphens, with the first
+                character a letter, the last a letter or
+                a number, and be 4-63 characters.
 
                 This corresponds to the ``custom_class_id`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -833,7 +1140,7 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([parent, custom_class, custom_class_id])
         if request is not None and has_flattened_params:
@@ -848,10 +1155,8 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         # there are no flattened fields.
         if not isinstance(request, cloud_speech_adaptation.CreateCustomClassRequest):
             request = cloud_speech_adaptation.CreateCustomClassRequest(request)
-
             # If we have keyword arguments corresponding to fields on the
             # request, apply these.
-
             if parent is not None:
                 request.parent = parent
             if custom_class is not None:
@@ -870,35 +1175,66 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         )
 
         # Send the request.
-        response = rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     def get_custom_class(
         self,
-        request: cloud_speech_adaptation.GetCustomClassRequest = None,
+        request: Union[cloud_speech_adaptation.GetCustomClassRequest, dict] = None,
         *,
         name: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> resource.CustomClass:
         r"""Get a custom class.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            def sample_get_custom_class():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.GetCustomClassRequest(
+                    name="name_value",
+                )
+
+                # Make the request
+                response = client.get_custom_class(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (google.cloud.speech_v1p1beta1.types.GetCustomClassRequest):
+            request (Union[google.cloud.speech_v1p1beta1.types.GetCustomClassRequest, dict]):
                 The request object. Message sent by the client for the
                 `GetCustomClass` method.
             name (str):
                 Required. The name of the custom class to retrieve.
                 Format:
-                {api_version}/projects/{project}/locations/{location}/customClasses/{custom_class}
+
+                ``projects/{project}/locations/{location}/customClasses/{custom_class}``
 
                 This corresponds to the ``name`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -917,7 +1253,7 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -932,10 +1268,8 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         # there are no flattened fields.
         if not isinstance(request, cloud_speech_adaptation.GetCustomClassRequest):
             request = cloud_speech_adaptation.GetCustomClassRequest(request)
-
             # If we have keyword arguments corresponding to fields on the
             # request, apply these.
-
             if name is not None:
                 request.name = name
 
@@ -950,35 +1284,75 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         )
 
         # Send the request.
-        response = rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     def list_custom_classes(
         self,
-        request: cloud_speech_adaptation.ListCustomClassesRequest = None,
+        request: Union[cloud_speech_adaptation.ListCustomClassesRequest, dict] = None,
         *,
         parent: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.ListCustomClassesPager:
         r"""List custom classes.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            def sample_list_custom_classes():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.ListCustomClassesRequest(
+                    parent="parent_value",
+                )
+
+                # Make the request
+                page_result = client.list_custom_classes(request=request)
+
+                # Handle the response
+                for response in page_result:
+                    print(response)
+
         Args:
-            request (google.cloud.speech_v1p1beta1.types.ListCustomClassesRequest):
+            request (Union[google.cloud.speech_v1p1beta1.types.ListCustomClassesRequest, dict]):
                 The request object. Message sent by the client for the
                 `ListCustomClasses` method.
             parent (str):
                 Required. The parent, which owns this collection of
                 custom classes. Format:
-                {api_version}/projects/{project}/locations/{location}/customClasses
+
+                ``projects/{project}/locations/{location}/customClasses``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``parent`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -995,7 +1369,7 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([parent])
         if request is not None and has_flattened_params:
@@ -1010,10 +1384,8 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         # there are no flattened fields.
         if not isinstance(request, cloud_speech_adaptation.ListCustomClassesRequest):
             request = cloud_speech_adaptation.ListCustomClassesRequest(request)
-
             # If we have keyword arguments corresponding to fields on the
             # request, apply these.
-
             if parent is not None:
                 request.parent = parent
 
@@ -1028,12 +1400,20 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         )
 
         # Send the request.
-        response = rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # This method is paged; wrap the response in a pager, which provides
         # an `__iter__` convenience method.
         response = pagers.ListCustomClassesPager(
-            method=rpc, request=request, response=response, metadata=metadata,
+            method=rpc,
+            request=request,
+            response=response,
+            metadata=metadata,
         )
 
         # Done; return the response.
@@ -1041,18 +1421,43 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
     def update_custom_class(
         self,
-        request: cloud_speech_adaptation.UpdateCustomClassRequest = None,
+        request: Union[cloud_speech_adaptation.UpdateCustomClassRequest, dict] = None,
         *,
         custom_class: resource.CustomClass = None,
-        update_mask: field_mask.FieldMask = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        update_mask: field_mask_pb2.FieldMask = None,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> resource.CustomClass:
         r"""Update a custom class.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            def sample_update_custom_class():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.UpdateCustomClassRequest(
+                )
+
+                # Make the request
+                response = client.update_custom_class(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (google.cloud.speech_v1p1beta1.types.UpdateCustomClassRequest):
+            request (Union[google.cloud.speech_v1p1beta1.types.UpdateCustomClassRequest, dict]):
                 The request object. Message sent by the client for the
                 `UpdateCustomClass` method.
             custom_class (google.cloud.speech_v1p1beta1.types.CustomClass):
@@ -1060,7 +1465,16 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
                 The custom class's ``name`` field is used to identify
                 the custom class to be updated. Format:
-                {api_version}/projects/{project}/locations/{location}/customClasses/{custom_class}
+
+                ``projects/{project}/locations/{location}/customClasses/{custom_class}``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``custom_class`` field
                 on the ``request`` instance; if ``request`` is provided, this
@@ -1070,7 +1484,6 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
                 This corresponds to the ``update_mask`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -1089,7 +1502,7 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([custom_class, update_mask])
         if request is not None and has_flattened_params:
@@ -1104,10 +1517,8 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         # there are no flattened fields.
         if not isinstance(request, cloud_speech_adaptation.UpdateCustomClassRequest):
             request = cloud_speech_adaptation.UpdateCustomClassRequest(request)
-
             # If we have keyword arguments corresponding to fields on the
             # request, apply these.
-
             if custom_class is not None:
                 request.custom_class = custom_class
             if update_mask is not None:
@@ -1126,35 +1537,71 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         )
 
         # Send the request.
-        response = rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     def delete_custom_class(
         self,
-        request: cloud_speech_adaptation.DeleteCustomClassRequest = None,
+        request: Union[cloud_speech_adaptation.DeleteCustomClassRequest, dict] = None,
         *,
         name: str = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Delete a custom class.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1p1beta1
+
+            def sample_delete_custom_class():
+                # Create a client
+                client = speech_v1p1beta1.AdaptationClient()
+
+                # Initialize request argument(s)
+                request = speech_v1p1beta1.DeleteCustomClassRequest(
+                    name="name_value",
+                )
+
+                # Make the request
+                client.delete_custom_class(request=request)
+
         Args:
-            request (google.cloud.speech_v1p1beta1.types.DeleteCustomClassRequest):
+            request (Union[google.cloud.speech_v1p1beta1.types.DeleteCustomClassRequest, dict]):
                 The request object. Message sent by the client for the
                 `DeleteCustomClass` method.
             name (str):
                 Required. The name of the custom class to delete.
                 Format:
-                {api_version}/projects/{project}/locations/{location}/customClasses/{custom_class}
+
+                ``projects/{project}/locations/{location}/customClasses/{custom_class}``
+
+                Speech-to-Text supports three locations: ``global``,
+                ``us`` (US North America), and ``eu`` (Europe). If you
+                are calling the ``speech.googleapis.com`` endpoint, use
+                the ``global`` location. To specify a region, use a
+                `regional
+                endpoint <https://cloud.google.com/speech-to-text/docs/endpoints>`__
+                with matching ``us`` or ``eu`` location value.
 
                 This corresponds to the ``name`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -1162,7 +1609,7 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
                 sent along with the request as metadata.
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -1177,10 +1624,8 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
         # there are no flattened fields.
         if not isinstance(request, cloud_speech_adaptation.DeleteCustomClassRequest):
             request = cloud_speech_adaptation.DeleteCustomClassRequest(request)
-
             # If we have keyword arguments corresponding to fields on the
             # request, apply these.
-
             if name is not None:
                 request.name = name
 
@@ -1196,13 +1641,31 @@ class AdaptationClient(metaclass=AdaptationClientMeta):
 
         # Send the request.
         rpc(
-            request, retry=retry, timeout=timeout, metadata=metadata,
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
         )
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        """Releases underlying transport's resources.
+
+        .. warning::
+            ONLY use as a context manager if the transport is NOT shared
+            with other clients! Exiting the with block will CLOSE the transport
+            and may cause errors in other clients!
+        """
+        self.transport.close()
 
 
 try:
     DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
-        gapic_version=pkg_resources.get_distribution("google-cloud-speech",).version,
+        gapic_version=pkg_resources.get_distribution(
+            "google-cloud-speech",
+        ).version,
     )
 except pkg_resources.DistributionNotFound:
     DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo()

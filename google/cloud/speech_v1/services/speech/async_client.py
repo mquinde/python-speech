@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-
-# Copyright 2020 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 from collections import OrderedDict
 import functools
 import re
 from typing import (
     Dict,
+    Mapping,
+    Optional,
     AsyncIterable,
     Awaitable,
     AsyncIterator,
@@ -30,18 +30,23 @@ from typing import (
 )
 import pkg_resources
 
-import google.api_core.client_options as ClientOptions  # type: ignore
-from google.api_core import exceptions  # type: ignore
-from google.api_core import gapic_v1  # type: ignore
-from google.api_core import retry as retries  # type: ignore
-from google.auth import credentials  # type: ignore
+from google.api_core.client_options import ClientOptions
+from google.api_core import exceptions as core_exceptions
+from google.api_core import gapic_v1
+from google.api_core import retry as retries
+from google.auth import credentials as ga_credentials  # type: ignore
 from google.oauth2 import service_account  # type: ignore
+
+try:
+    OptionalRetry = Union[retries.Retry, gapic_v1.method._MethodDefault]
+except AttributeError:  # pragma: NO COVER
+    OptionalRetry = Union[retries.Retry, object]  # type: ignore
 
 from google.api_core import operation  # type: ignore
 from google.api_core import operation_async  # type: ignore
 from google.cloud.speech_v1.types import cloud_speech
-from google.rpc import status_pb2 as status  # type: ignore
-
+from google.protobuf import duration_pb2  # type: ignore
+from google.rpc import status_pb2  # type: ignore
 from .transports.base import SpeechTransport, DEFAULT_CLIENT_INFO
 from .transports.grpc_asyncio import SpeechGrpcAsyncIOTransport
 from .client import SpeechClient
@@ -55,28 +60,29 @@ class SpeechAsyncClient:
     DEFAULT_ENDPOINT = SpeechClient.DEFAULT_ENDPOINT
     DEFAULT_MTLS_ENDPOINT = SpeechClient.DEFAULT_MTLS_ENDPOINT
 
+    custom_class_path = staticmethod(SpeechClient.custom_class_path)
+    parse_custom_class_path = staticmethod(SpeechClient.parse_custom_class_path)
+    phrase_set_path = staticmethod(SpeechClient.phrase_set_path)
+    parse_phrase_set_path = staticmethod(SpeechClient.parse_phrase_set_path)
     common_billing_account_path = staticmethod(SpeechClient.common_billing_account_path)
     parse_common_billing_account_path = staticmethod(
         SpeechClient.parse_common_billing_account_path
     )
-
     common_folder_path = staticmethod(SpeechClient.common_folder_path)
     parse_common_folder_path = staticmethod(SpeechClient.parse_common_folder_path)
-
     common_organization_path = staticmethod(SpeechClient.common_organization_path)
     parse_common_organization_path = staticmethod(
         SpeechClient.parse_common_organization_path
     )
-
     common_project_path = staticmethod(SpeechClient.common_project_path)
     parse_common_project_path = staticmethod(SpeechClient.parse_common_project_path)
-
     common_location_path = staticmethod(SpeechClient.common_location_path)
     parse_common_location_path = staticmethod(SpeechClient.parse_common_location_path)
 
     @classmethod
     def from_service_account_info(cls, info: dict, *args, **kwargs):
-        """Creates an instance of this client using the provided credentials info.
+        """Creates an instance of this client using the provided credentials
+            info.
 
         Args:
             info (dict): The service account private key info.
@@ -91,7 +97,7 @@ class SpeechAsyncClient:
     @classmethod
     def from_service_account_file(cls, filename: str, *args, **kwargs):
         """Creates an instance of this client using the provided credentials
-        file.
+            file.
 
         Args:
             filename (str): The path to the service account private key json
@@ -106,9 +112,45 @@ class SpeechAsyncClient:
 
     from_service_account_json = from_service_account_file
 
+    @classmethod
+    def get_mtls_endpoint_and_cert_source(
+        cls, client_options: Optional[ClientOptions] = None
+    ):
+        """Return the API endpoint and client cert source for mutual TLS.
+
+        The client cert source is determined in the following order:
+        (1) if `GOOGLE_API_USE_CLIENT_CERTIFICATE` environment variable is not "true", the
+        client cert source is None.
+        (2) if `client_options.client_cert_source` is provided, use the provided one; if the
+        default client cert source exists, use the default one; otherwise the client cert
+        source is None.
+
+        The API endpoint is determined in the following order:
+        (1) if `client_options.api_endpoint` if provided, use the provided one.
+        (2) if `GOOGLE_API_USE_CLIENT_CERTIFICATE` environment variable is "always", use the
+        default mTLS endpoint; if the environment variabel is "never", use the default API
+        endpoint; otherwise if client cert source exists, use the default mTLS endpoint, otherwise
+        use the default API endpoint.
+
+        More details can be found at https://google.aip.dev/auth/4114.
+
+        Args:
+            client_options (google.api_core.client_options.ClientOptions): Custom options for the
+                client. Only the `api_endpoint` and `client_cert_source` properties may be used
+                in this method.
+
+        Returns:
+            Tuple[str, Callable[[], Tuple[bytes, bytes]]]: returns the API endpoint and the
+                client cert source to use.
+
+        Raises:
+            google.auth.exceptions.MutualTLSChannelError: If any errors happen.
+        """
+        return SpeechClient.get_mtls_endpoint_and_cert_source(client_options)  # type: ignore
+
     @property
     def transport(self) -> SpeechTransport:
-        """Return the transport used by the client instance.
+        """Returns the transport used by the client instance.
 
         Returns:
             SpeechTransport: The transport used by the client instance.
@@ -122,12 +164,12 @@ class SpeechAsyncClient:
     def __init__(
         self,
         *,
-        credentials: credentials.Credentials = None,
+        credentials: ga_credentials.Credentials = None,
         transport: Union[str, SpeechTransport] = "grpc_asyncio",
         client_options: ClientOptions = None,
         client_info: gapic_v1.client_info.ClientInfo = DEFAULT_CLIENT_INFO,
     ) -> None:
-        """Instantiate the speech client.
+        """Instantiates the speech client.
 
         Args:
             credentials (Optional[google.auth.credentials.Credentials]): The
@@ -159,7 +201,6 @@ class SpeechAsyncClient:
             google.auth.exceptions.MutualTlsChannelError: If mutual TLS transport
                 creation failed for any reason.
         """
-
         self._client = SpeechClient(
             credentials=credentials,
             transport=transport,
@@ -169,19 +210,52 @@ class SpeechAsyncClient:
 
     async def recognize(
         self,
-        request: cloud_speech.RecognizeRequest = None,
+        request: Union[cloud_speech.RecognizeRequest, dict] = None,
         *,
         config: cloud_speech.RecognitionConfig = None,
         audio: cloud_speech.RecognitionAudio = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> cloud_speech.RecognizeResponse:
         r"""Performs synchronous speech recognition: receive
         results after all audio has been sent and processed.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1
+
+            async def sample_recognize():
+                # Create a client
+                client = speech_v1.SpeechAsyncClient()
+
+                # Initialize request argument(s)
+                config = speech_v1.RecognitionConfig()
+                config.language_code = "language_code_value"
+
+                audio = speech_v1.RecognitionAudio()
+                audio.content = b'content_blob'
+
+                request = speech_v1.RecognizeRequest(
+                    config=config,
+                    audio=audio,
+                )
+
+                # Make the request
+                response = await client.recognize(request=request)
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (:class:`google.cloud.speech_v1.types.RecognizeRequest`):
+            request (Union[google.cloud.speech_v1.types.RecognizeRequest, dict]):
                 The request object. The top-level message sent by the
                 client for the `Recognize` method.
             config (:class:`google.cloud.speech_v1.types.RecognitionConfig`):
@@ -199,7 +273,6 @@ class SpeechAsyncClient:
                 This corresponds to the ``audio`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -214,7 +287,7 @@ class SpeechAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([config, audio])
         if request is not None and has_flattened_params:
@@ -227,7 +300,6 @@ class SpeechAsyncClient:
 
         # If we have keyword arguments corresponding to fields on the
         # request, apply these.
-
         if config is not None:
             request.config = config
         if audio is not None:
@@ -242,7 +314,8 @@ class SpeechAsyncClient:
                 maximum=60.0,
                 multiplier=1.3,
                 predicate=retries.if_exception_type(
-                    exceptions.DeadlineExceeded, exceptions.ServiceUnavailable,
+                    core_exceptions.DeadlineExceeded,
+                    core_exceptions.ServiceUnavailable,
                 ),
                 deadline=5000.0,
             ),
@@ -251,18 +324,23 @@ class SpeechAsyncClient:
         )
 
         # Send the request.
-        response = await rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = await rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
     async def long_running_recognize(
         self,
-        request: cloud_speech.LongRunningRecognizeRequest = None,
+        request: Union[cloud_speech.LongRunningRecognizeRequest, dict] = None,
         *,
         config: cloud_speech.RecognitionConfig = None,
         audio: cloud_speech.RecognitionAudio = None,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> operation_async.AsyncOperation:
@@ -273,8 +351,45 @@ class SpeechAsyncClient:
         on asynchronous speech recognition, see the
         `how-to <https://cloud.google.com/speech-to-text/docs/async-recognize>`__.
 
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1
+
+            async def sample_long_running_recognize():
+                # Create a client
+                client = speech_v1.SpeechAsyncClient()
+
+                # Initialize request argument(s)
+                config = speech_v1.RecognitionConfig()
+                config.language_code = "language_code_value"
+
+                audio = speech_v1.RecognitionAudio()
+                audio.content = b'content_blob'
+
+                request = speech_v1.LongRunningRecognizeRequest(
+                    config=config,
+                    audio=audio,
+                )
+
+                # Make the request
+                operation = client.long_running_recognize(request=request)
+
+                print("Waiting for operation to complete...")
+
+                response = await operation.result()
+
+                # Handle the response
+                print(response)
+
         Args:
-            request (:class:`google.cloud.speech_v1.types.LongRunningRecognizeRequest`):
+            request (Union[google.cloud.speech_v1.types.LongRunningRecognizeRequest, dict]):
                 The request object. The top-level message sent by the
                 client for the `LongRunningRecognize` method.
             config (:class:`google.cloud.speech_v1.types.RecognitionConfig`):
@@ -292,7 +407,6 @@ class SpeechAsyncClient:
                 This corresponds to the ``audio`` field
                 on the ``request`` instance; if ``request`` is provided, this
                 should not be set.
-
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
                 should be retried.
             timeout (float): The timeout for this request.
@@ -312,7 +426,7 @@ class SpeechAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Sanity check: If we got a request object, we should *not* have
+        # Quick check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([config, audio])
         if request is not None and has_flattened_params:
@@ -325,7 +439,6 @@ class SpeechAsyncClient:
 
         # If we have keyword arguments corresponding to fields on the
         # request, apply these.
-
         if config is not None:
             request.config = config
         if audio is not None:
@@ -340,7 +453,12 @@ class SpeechAsyncClient:
         )
 
         # Send the request.
-        response = await rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
+        response = await rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Wrap the response in an operation future.
         response = operation_async.from_gapic(
@@ -357,13 +475,53 @@ class SpeechAsyncClient:
         self,
         requests: AsyncIterator[cloud_speech.StreamingRecognizeRequest] = None,
         *,
-        retry: retries.Retry = gapic_v1.method.DEFAULT,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> Awaitable[AsyncIterable[cloud_speech.StreamingRecognizeResponse]]:
         r"""Performs bidirectional streaming speech recognition:
         receive results while sending audio. This method is only
         available via the gRPC API (not REST).
+
+        .. code-block:: python
+
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import speech_v1
+
+            async def sample_streaming_recognize():
+                # Create a client
+                client = speech_v1.SpeechAsyncClient()
+
+                # Initialize request argument(s)
+                streaming_config = speech_v1.StreamingRecognitionConfig()
+                streaming_config.config.language_code = "language_code_value"
+
+                request = speech_v1.StreamingRecognizeRequest(
+                    streaming_config=streaming_config,
+                )
+
+                # This method expects an iterator which contains
+                # 'speech_v1.StreamingRecognizeRequest' objects
+                # Here we create a generator that yields a single `request` for
+                # demonstrative purposes.
+                requests = [request]
+
+                def request_generator():
+                    for request in requests:
+                        yield request
+
+                # Make the request
+                stream = await client.streaming_recognize(requests=request_generator())
+
+                # Handle the response
+                async for response in stream:
+                    print(response)
 
         Args:
             requests (AsyncIterator[`google.cloud.speech_v1.types.StreamingRecognizeRequest`]):
@@ -389,7 +547,7 @@ class SpeechAsyncClient:
                    single_utterance is set to false, then no messages
                    are streamed back to the client.
 
-                   Here's an example of a series of ten
+                   Here's an example of a series of
                    StreamingRecognizeResponses that might be returned
                    while processing audio:
 
@@ -454,7 +612,8 @@ class SpeechAsyncClient:
                 maximum=60.0,
                 multiplier=1.3,
                 predicate=retries.if_exception_type(
-                    exceptions.DeadlineExceeded, exceptions.ServiceUnavailable,
+                    core_exceptions.DeadlineExceeded,
+                    core_exceptions.ServiceUnavailable,
                 ),
                 deadline=5000.0,
             ),
@@ -463,15 +622,28 @@ class SpeechAsyncClient:
         )
 
         # Send the request.
-        response = rpc(requests, retry=retry, timeout=timeout, metadata=metadata,)
+        response = rpc(
+            requests,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
 
         # Done; return the response.
         return response
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.transport.close()
+
 
 try:
     DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo(
-        gapic_version=pkg_resources.get_distribution("google-cloud-speech",).version,
+        gapic_version=pkg_resources.get_distribution(
+            "google-cloud-speech",
+        ).version,
     )
 except pkg_resources.DistributionNotFound:
     DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo()
